@@ -394,7 +394,7 @@ Object.assign(I18N.ko, {
   m_cap_err: e => ({ bad_url: 'abercrombie.com 또는 hollisterco.com 상품 페이지 주소(/p/ 가 들어간 주소)를 넣어주세요.', blocked: 'A&F가 서버의 자동 접속을 막고 있습니다. 상품 페이지를 열고 북마클릿을 누르면 바로 저장됩니다.', not_a_product_page: '상품 페이지를 읽지 못했습니다. 판매가 끝난 상품일 수 있습니다.', network: '서버에 연결하지 못했습니다.', checksum_mismatch: '데이터가 손상되었습니다. 북마클릿으로 다시 수집해 주세요.', not_tracker_data: 'A&F 수집 북마클릿 데이터가 아닙니다.' })[e] || ('수집하지 못했습니다 (' + e + ')'),
   open_pdp: '상품 페이지 열기 ↗', ad_btn: '관리자', ad_on: '관리자 모드', ad_ph: '관리자 비밀번호', ad_go: '확인', ad_out: '나가기', ad_ok: '관리자 모드로 전환했습니다.', ad_bad: '비밀번호가 맞지 않습니다.',
   w_none_s: '매일 오전 자동으로 다시 수집해서 쌓입니다. 상품을 추가한 다음 날부터 판매 추정이 나타납니다.',
-  w_nomark: '세아로 표시된 스타일이 아직 없습니다. 관리자 모드에서 상품을 열고 "세아 스타일로 표시"를 눌러주세요.'
+  w_nomark: '세아로 표시된 스타일이 아직 없습니다. 상품을 열고 "세아 스타일로 표시"를 눌러주세요.'
 });
 Object.assign(I18N.en, {
   hint_data: 'Paste bookmarklet data → saved instantly', hint_url: 'URL only → the server tries to collect it and points you to the bookmarklet if blocked',
@@ -408,7 +408,7 @@ Object.assign(I18N.en, {
   m_cap_err: e => ({ bad_url: 'Enter an abercrombie.com or hollisterco.com product page URL (one that contains /p/).', blocked: 'A&F is blocking automated access from the server. Open the product page and click the bookmarklet to save it.', not_a_product_page: 'Could not read a product page. The style may no longer be sold.', network: 'Could not reach the server.', checksum_mismatch: 'The data was damaged. Capture it again with the bookmarklet.', not_tracker_data: 'This is not data from the A&F Capture bookmarklet.' })[e] || ('Could not capture (' + e + ')'),
   open_pdp: 'Open product page ↗', ad_btn: 'Admin', ad_on: 'Admin mode', ad_ph: 'Admin password', ad_go: 'Enter', ad_out: 'Exit', ad_ok: 'Admin mode on.', ad_bad: 'That password is not right.',
   w_none_s: 'Styles are captured again automatically every morning. Estimated sales appear from the day after a style is added.',
-  w_nomark: 'No styles are marked as Sae-A yet. In admin mode, open a style and click "Mark as Sae-A style".'
+  w_nomark: 'No styles are marked as Sae-A yet. Open a style and click "Mark as Sae-A style".'
 });
 let LANG = 'ko';
 try { const v = localStorage.getItem('anf-lang'); if (v === 'en' || v === 'ko') LANG = v; } catch (e) {}
@@ -614,7 +614,7 @@ function renderSheet(){
     '<h2>' + esc(s.name) + '</h2>' +
     '<div class="crumb"><span class="mono">' + esc(t('captured')) + ' ' + esc(fmtTime(s.capturedAt)) + '</span><span>· ' + esc(t('records', hist.length)) + '</span>' + (s.store && s.store !== 'us' ? '<span>· ' + esc(t('store')) + ' ' + esc(s.store) + '</span>' : '') + '</div></div>' +
     '<div class="actions"><a class="btn small" href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(t('b_page')) + '</a>' +
-    (state.admin ? '<button type="button" class="btn small' + (s.seaa ? '' : ' primary') + '" id="seaToggle">' + esc(t(s.seaa ? 'b_sea_off' : 'b_sea_on')) + '</button>' : '') +
+    '<button type="button" class="btn small' + (s.seaa ? '' : ' primary') + '" id="seaToggle">' + esc(t(s.seaa ? 'b_sea_off' : 'b_sea_on')) + '</button>' +
     '<button type="button" class="btn small" id="reqRefresh">' + esc(t('b_refresh')) + '</button>' +
     '<button type="button" class="btn small" id="csv">' + esc(t('b_csv')) + '</button>' +
     (state.admin ? '<button type="button" class="btn small danger" id="del">' + esc(t('b_del')) + '</button>' : '') + '</div></div>' +

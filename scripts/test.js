@@ -74,9 +74,9 @@ const rb = await post('/api/ingest', bad);
 assert.equal(rb.status, 400); assert.equal(rb.j.error, 'checksum_mismatch');
 
 // 6) Admin actions need the key
-assert.equal((await post('/api/admin', { action: 'mark', key: fixture.key })).status, 401);
+assert.equal((await post('/api/admin', { action: 'delete', key: fixture.key })).status, 401);
 assert.equal((await post('/api/admin', { action: 'check' }, { 'x-admin-key': 'test-admin' })).status, 200);
-assert.equal((await post('/api/admin', { action: 'mark', key: fixture.key }, { 'x-admin-key': 'test-admin' })).status, 200);
+assert.equal((await post('/api/admin', { action: 'mark', key: fixture.key })).status, 200);
 const listed = (await get('/api/styles')).styles.find(s => s.key === fixture.key);
 assert.equal(listed.seaa, true); assert.equal(listed.date, dates[9]);
 const hist = (await get('/api/history?key=' + fixture.key)).history;
