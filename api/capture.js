@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   if (!url) return send(res, 400, { ok: false, error: 'bad_url' });
   try {
     const r = await capture(url);
-    if (!r.ok) return send(res, 502, { ok: false, error: r.error, url });
+    if (!r.ok) return send(res, 502, { ok: false, error: r.error, url, status: r.status, len: r.len, title: r.title, region: process.env.VERCEL_REGION || null });
     await save(r.style, r.hist);
     return send(res, 200, { ok: true, style: r.style, hist: r.hist });
   } catch (e) {
