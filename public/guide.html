@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A&amp;F 수집 사용법</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2323438A'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='700' font-size='14' text-anchor='middle' fill='white'%3EAF%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600..800&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F3F4F6; --surface:#FFFFFF; --sunk:#ECEEF2; --ink:#141C29; --muted:#5B6576; --line:#DCE0E6;
+  --accent:#23438A; --accent-soft:#E2E8F5; --good:#1E7A4C; --good-soft:#E3F2EA; --warn:#A86300; --warn-soft:#FBEFD9;
+  --mark:#E8590C;
+  --chrome:#DEE1E6; --chrome-2:#F1F3F4; --chrome-ink:#3C4043;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E131A; --surface:#151C26; --sunk:#111821; --ink:#E5E9EF; --muted:#93A0B3; --line:#263142;
+  --accent:#8FA9EA; --accent-soft:#1C2944; --good:#4FC48C; --good-soft:#12291F; --warn:#E3A43C; --warn-soft:#2B2210;
+  --mark:#FF8A3D; --chrome:#35363A; --chrome-2:#202124; --chrome-ink:#E8EAED; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E131A; --surface:#151C26; --sunk:#111821; --ink:#E5E9EF; --muted:#93A0B3; --line:#263142;
+  --accent:#8FA9EA; --accent-soft:#1C2944; --good:#4FC48C; --good-soft:#12291F; --warn:#E3A43C; --warn-soft:#2B2210;
+  --mark:#FF8A3D; --chrome:#35363A; --chrome-2:#202124; --chrome-ink:#E8EAED; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.65;padding:28px 16px 64px}
+.wrap{max-width:860px;margin:0 auto}
+h1{font-family:var(--f-display);font-size:clamp(26px,5vw,38px);line-height:1.15;margin:0 0 8px;letter-spacing:-.01em}
+h1 span{color:var(--accent)}
+.lead{color:var(--muted);margin:0 0 6px;font-size:17px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 30px}
+.pill{font-size:13px;font-weight:600;padding:4px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.part{font-family:var(--f-display);font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:44px 0 12px}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px;margin-bottom:16px}
+.step h2{display:flex;gap:12px;align-items:center;margin:0 0 10px;font-size:20px;line-height:1.35}
+.num{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:17px}
+.step p{margin:0 0 12px}
+kbd{font-family:inherit;font-size:14px;font-weight:700;background:var(--sunk);border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;padding:1px 8px;white-space:nowrap}
+b.hl{color:var(--mark)}
+.note{font-size:14px;color:var(--muted)}
+.tip{font-size:14px;background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:10px 14px;margin-top:12px}
+.tip b{color:inherit}
+figure{margin:14px 0 0}
+figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+.shot{display:block;width:100%;border:1px solid var(--line);border-radius:8px}
+
+/* the real bookmarklet */
+.grab{display:flex;flex-wrap:wrap;gap:14px;align-items:center;background:var(--accent-soft);border:2px dashed var(--accent);border-radius:10px;padding:18px;margin:6px 0 4px}
+.bmlink{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:var(--surface);padding:12px 22px;border-radius:999px;text-decoration:none;font-weight:700;font-size:17px;cursor:grab;box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.bmlink:active{cursor:grabbing}
+.grab .note{flex:1 1 220px;color:var(--ink)}
+.btn{font:inherit;font-size:14px;font-weight:600;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+#copyMsg{font-size:14px;color:var(--good);font-weight:600}
+#bmMsg{font-size:14px;color:var(--warn);font-weight:600}
+
+/* drawn browser window */
+.win{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface);font-family:system-ui,"Malgun Gothic",sans-serif;font-size:13px;color:var(--chrome-ink);user-select:none}
+.tabs{background:var(--chrome);display:flex;align-items:flex-end;gap:6px;padding:8px 10px 0}
+.dots{display:flex;gap:6px;margin:0 10px 10px 2px}.dots i{width:10px;height:10px;border-radius:50%;background:#c4c7cc;display:block}
+.tab{background:var(--chrome-2);border-radius:8px 8px 0 0;padding:7px 14px;min-width:150px;max-width:60%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{background:var(--chrome-2);display:flex;align-items:center;gap:10px;padding:6px 10px}
+.nav{display:flex;gap:10px;color:#80868b;font-size:15px}
+.addr{flex:1;background:var(--surface);border-radius:999px;padding:5px 14px;color:var(--chrome-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.marks{background:var(--chrome-2);border-top:1px solid var(--line);display:flex;align-items:center;gap:6px;padding:5px 10px;min-height:32px;position:relative}
+.mk{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;color:var(--chrome-ink);white-space:nowrap}
+.mk::before{content:"";width:12px;height:12px;border-radius:3px;background:#9aa0a6;display:inline-block}
+.mk.ours{background:var(--surface);font-weight:700;outline:2px solid var(--mark);outline-offset:1px}
+.mk.ours::before{background:var(--accent)}
+.mk.ghost{opacity:.5}
+.marks.ring{outline:3px solid var(--mark);outline-offset:-3px}
+.page{padding:18px;min-height:150px;position:relative;background:var(--surface)}
+.ph-lines i{display:block;height:10px;border-radius:5px;background:var(--sunk);margin-bottom:9px}
+.prod{display:grid;grid-template-columns:120px 1fr;gap:16px}
+.prod .img{height:150px;border-radius:6px;background:var(--sunk);display:grid;place-items:center;color:var(--muted);font-size:12px}
+.prod h4{margin:0 0 6px;font-size:15px;color:var(--ink)}
+.callout{position:absolute;background:var(--mark);color:#fff;font-weight:700;font-size:13px;padding:5px 10px;border-radius:6px;white-space:nowrap;font-family:var(--f-body)}
+.callout::after{content:"";position:absolute;border:7px solid transparent}
+.callout.up::after{border-bottom-color:var(--mark);top:-14px;left:18px}
+.drag{position:absolute;left:24px;top:62px;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.drag .arrow{color:var(--mark);font-size:28px;line-height:1;font-weight:800;margin-left:30px}
+.drag .chip{background:var(--ink);color:var(--surface);font-weight:700;padding:8px 16px;border-radius:999px;box-shadow:0 6px 16px rgba(0,0,0,.25);transform:rotate(-3deg)}
+.cursor{position:absolute;width:20px;height:20px}
+.cursor::before{content:"";position:absolute;inset:0;background:var(--ink);clip-path:polygon(0 0,0 100%,28% 74%,48% 100%,62% 94%,44% 68%,80% 68%);}
+.menu{position:absolute;top:30px;left:120px;background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,.18);padding:4px 0;min-width:180px;z-index:2}
+.menu div{padding:5px 14px;color:var(--chrome-ink)}
+.menu .on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.dialog{max-width:380px;margin:4px auto 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:16px;font-size:13px}
+.dialog .t{font-weight:700;font-size:15px;margin-bottom:10px;color:var(--ink)}
+.dialog label{display:block;color:var(--muted);margin:8px 0 3px}
+.dialog .f{border:1px solid var(--line);border-radius:4px;padding:6px 8px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dialog .f.hi{outline:2px solid var(--mark)}
+.dialog .btns{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.dialog .btns span{padding:5px 14px;border-radius:999px;border:1px solid var(--line)}
+.dialog .btns .ok{background:var(--accent);color:#fff;border-color:var(--accent);outline:2px solid var(--mark);outline-offset:2px}
+.overlay{position:absolute;right:14px;bottom:14px;width:300px;max-width:calc(100% - 28px);background:#141C29;color:#fff;font:13px/1.5 system-ui,sans-serif;padding:12px;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.35);outline:3px solid var(--mark);outline-offset:3px}
+.overlay .n{font-weight:600}.overlay .s{opacity:.75;font-size:12px}.overlay .ok{margin-top:6px}
+.overlay .r{display:flex;gap:10px;margin-top:8px;align-items:center}.overlay a{color:#9db4ff;font-weight:600}
+.overlay button{font:inherit;font-size:12px;padding:3px 10px}
+
+.faq{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 22px}
+.faq details{border-bottom:1px solid var(--line);padding:12px 0}
+.faq details:last-child{border-bottom:0}
+.faq summary{cursor:pointer;font-weight:700}
+.faq p{margin:8px 0 0;color:var(--muted)}
+.back{display:inline-block;margin-top:28px;color:var(--accent);font-weight:700}
+@media (max-width:560px){.prod{grid-template-columns:80px 1fr}.prod .img{height:110px}.tab{min-width:0}.step{padding:16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span>A&amp;F 수집</span> 북마크 설치·사용법</h1>
+  <p class="lead">A&amp;F·Hollister 상품 페이지에서 버튼 한 번만 누르면 재고·가격이 트래커에 저장됩니다.</p>
+  <div class="meta"><span class="pill">PC 크롬(Chrome) 기준</span><span class="pill">설치는 처음 한 번, 1분</span><span class="pill">핸드폰은 안 됩니다</span></div>
+
+  <div class="part">설치 — 처음 한 번만</div>
+
+  <section class="step">
+    <h2><span class="num">1</span>북마크바를 켭니다</h2>
+    <p>크롬에서 키보드 <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> 를 동시에 누릅니다. 주소창 바로 아래에 <b class="hl">북마크바</b>(가로 줄)가 생깁니다.</p>
+    <figure>
+      <div class="win" aria-hidden="true">
+        <div class="tabs"><div class="dots"><i></i><i></i><i></i></div><div class="tab">A&amp;F 수집 사용법</div></div>
+        <div class="bar"><span class="nav">← → ↻</span><span class="addr">anf-style-tracker.vercel.app/guide.html</span></div>
+        <div class="marks ring"><span class="mk ghost">북마크</span><span class="mk ghost">즐겨찾기</span></div>
+        <div class="page" style="min-height:90px"><span class="callout up" style="left:16px;top:16px">여기가 북마크바</span></div>
+      </div>
+      <figcaption>그림: 주소창 아래 주황색으로 표시한 줄이 북마크바입니다. 이미 보이면 이 단계는 건너뛰세요. (Mac은 <kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd>)</figcaption>
+    </figure>
+  </section>
+
+  <section class="step">
+    <h2><span class="num">2</span>아래 검은 버튼을 북마크바로 끌어다 놓습니다</h2>
+    <p>버튼 위에서 마우스 왼쪽 버튼을 <b>누른 채로</b> 위쪽 북마크바까지 끌고 가서 손을 뗍니다. <b>클릭이 아니라 끌기</b>입니다.</p>
+    <div class="grab">
+      <a class="bmlink" id="bmLink" href="#">🔖 A&amp;F 수집</a>
+      <span class="note">← 이 버튼을 잡고 북마크바로 끌어 올리세요</span>
+    </div>
+    <div id="bmMsg" role="status"></div>
+    <figure>
+      <div class="win" aria-hidden="true">
+        <div class="tabs"><div class="dots"><i></i><i></i><i></i></div><div class="tab">A&amp;F 수집 사용법</div></div>
+        <div class="bar"><span class="nav">← → ↻</span><span class="addr">anf-style-tracker.vercel.app/guide.html</span></div>
+        <div class="marks"><span class="mk ghost">북마크</span><span class="mk ours">A&amp;F 수집</span></div>
+        <div class="page" style="min-height:140px">
+          <div class="drag"><span class="arrow">⬆</span><span class="chip">🔖 A&amp;F 수집</span></div>
+          <span class="cursor" style="left:120px;top:96px"></span>
+        </div>
+      </div>
+      <figcaption>그림: 끌어다 놓으면 북마크바에 <b>A&amp;F 수집</b>이 생깁니다. 이게 보이면 설치 끝입니다.</figcaption>
+    </figure>
+  </section>
+
+  <section class="step">
+    <h2><span class="num">2-1</span>끌기가 안 될 때만: 직접 북마크 만들기</h2>
+    <p>① 아래 <b>[코드 복사]</b>를 누릅니다. ② 북마크바 빈 곳에서 <b>마우스 오른쪽 클릭 → "페이지 추가…"</b>. ③ <b>이름</b>에 <code>A&amp;F 수집</code>, <b>URL</b> 칸을 비우고 <kbd>Ctrl</kbd> + <kbd>V</kbd> 로 붙여넣은 뒤 <b>저장</b>.</p>
+    <p><button class="btn" id="copyBtn" type="button">코드 복사</button> <span id="copyMsg" role="status"></span></p>
+    <figure>
+      <div class="win" aria-hidden="true">
+        <div class="tabs"><div class="dots"><i></i><i></i><i></i></div><div class="tab">새 탭</div></div>
+        <div class="bar"><span class="nav">← → ↻</span><span class="addr">　</span></div>
+        <div class="marks"><span class="mk ghost">북마크</span><span class="cursor" style="left:118px;top:10px"></span>
+          <div class="menu"><div>새 탭에서 모두 열기</div><hr><div class="on">페이지 추가…</div><div>폴더 추가…</div><hr><div>북마크바 표시</div></div>
+        </div>
+        <div class="page" style="padding-top:150px">
+          <div class="dialog">
+            <div class="t">북마크</div>
+            <label>이름</label><div class="f hi">A&amp;F 수집</div>
+            <label>URL</label><div class="f hi">javascript:(function bmMain(L, SITE…</div>
+            <div class="btns"><span>취소</span><span class="ok">저장</span></div>
+          </div>
+        </div>
+      </div>
+      <figcaption>그림: 오른쪽 클릭 메뉴의 "페이지 추가…"와, 이름·URL을 넣는 창. 크롬 버전에 따라 모양은 조금 다를 수 있습니다.</figcaption>
+    </figure>
+  </section>
+
+  <div class="part">사용 — 상품을 저장할 때마다</div>
+
+  <section class="step">
+    <h2><span class="num">3</span>A&amp;F나 Hollister 상품 페이지를 엽니다</h2>
+    <p>abercrombie.com 또는 hollisterco.com에서 저장하고 싶은 <b>상품 하나의 상세 페이지</b>를 엽니다. 주소에 <code>/p/</code> 가 들어간 페이지입니다. 목록(카테고리) 페이지에서는 안 됩니다.</p>
+  </section>
+
+  <section class="step">
+    <h2><span class="num">4</span>북마크바의 [A&amp;F 수집]을 한 번 누릅니다</h2>
+    <figure>
+      <div class="win" aria-hidden="true">
+        <div class="tabs"><div class="dots"><i></i><i></i><i></i></div><div class="tab">상품 상세 페이지</div></div>
+        <div class="bar"><span class="nav">← → ↻</span><span class="addr">abercrombie.com/shop/us/p/…</span></div>
+        <div class="marks"><span class="mk ghost">북마크</span><span class="mk ours">A&amp;F 수집</span><span class="cursor" style="left:150px;top:14px"></span></div>
+        <div class="page" style="padding-top:50px">
+          <span class="callout up" style="left:120px;top:8px">한 번 클릭</span>
+          <div class="prod"><div class="img">상품 사진</div>
+            <div><h4>상품 이름</h4><div class="ph-lines"><i style="width:40%"></i><i style="width:70%"></i><i style="width:55%"></i><i style="width:62%"></i></div></div></div>
+        </div>
+      </div>
+      <figcaption>그림: 상품 페이지가 열린 상태에서 북마크바의 <b>A&amp;F 수집</b>을 클릭합니다.</figcaption>
+    </figure>
+  </section>
+
+  <section class="step">
+    <h2><span class="num">5</span>오른쪽 아래에 "✓ 저장됨"이 뜨면 끝</h2>
+    <p>1–2초 뒤 화면 오른쪽 아래에 검은 상자가 뜹니다. <b>✓ 저장됨</b>이 보이면 저장 완료입니다. <b>트래커에서 보기</b>를 누르면 결과 화면으로 갑니다.</p>
+    <figure>
+      <div class="win" aria-hidden="true">
+        <div class="tabs"><div class="dots"><i></i><i></i><i></i></div><div class="tab">상품 상세 페이지</div></div>
+        <div class="bar"><span class="nav">← → ↻</span><span class="addr">abercrombie.com/shop/us/p/…</span></div>
+        <div class="marks"><span class="mk ghost">북마크</span><span class="mk ours">A&amp;F 수집</span></div>
+        <div class="page" style="min-height:220px">
+          <div class="prod"><div class="img">상품 사진</div>
+            <div><h4>상품 이름</h4><div class="ph-lines"><i style="width:40%"></i><i style="width:70%"></i><i style="width:55%"></i></div></div></div>
+          <div class="overlay"><div class="n">Bra-Free Rib Scoop Neck Tank</div><div class="s">12컬러 · 78,258개</div><div class="ok">✓ 저장됨 (2026-10-20)</div>
+            <div class="r"><a>트래커에서 보기</a><button type="button" tabindex="-1">닫기</button></div></div>
+        </div>
+      </div>
+      <figcaption>그림: 저장되면 나타나는 상자. "저장하지 못했습니다"가 나오면 페이지를 새로고침(<kbd>F5</kbd>)하고 다시 눌러 보세요.</figcaption>
+    </figure>
+  </section>
+
+  <section class="step">
+    <h2><span class="num">6</span>트래커에서 결과 확인 · 세아 표시</h2>
+    <p>컬러 × 사이즈 재고, 가격·할인, 판매 추정이 나옵니다. 세아 스타일이면 <b>[세아 스타일로 표시]</b>를 눌러 주세요. 주간 리포트에서 세아와 타사가 나뉘어 비교됩니다.</p>
+    <figure>
+      <img class="shot" src="/guide/result.png" alt="트래커 결과 화면 예시: 상품명, 세아 표시 버튼, 총 재고·판매가·판매 추정 요약, 컬러 × 사이즈 재고표" loading="lazy">
+      <figcaption>예시 화면입니다. 실제 화면에는 회색 칸 자리에 대표 사진이 나옵니다.</figcaption>
+    </figure>
+    <div class="tip"><b>판매 추정은 두 번째 수집부터</b> 나옵니다. 같은 상품을 다른 날 다시 한 번 눌러 주세요. 자주 누를수록 주간 판매 데이터가 정확해집니다.</div>
+  </section>
+
+  <div class="part">자주 묻는 것</div>
+  <div class="faq">
+    <details><summary>트래커 사이트의 [A&amp;F 수집] 버튼을 클릭했는데 아무 일도 안 일어나요</summary><p>정상입니다. 그 버튼은 북마크바로 <b>끌어다 놓는</b> 용도입니다. 북마크바에 생긴 버튼을 A&amp;F·Hollister 상품 페이지에서 눌러야 동작합니다.</p></details>
+    <details><summary>"상품 페이지에서 눌러주세요"라는 경고창이 떠요</summary><p>상품 목록이나 메인 페이지에서 누른 경우입니다. 상품 하나를 클릭해 상세 페이지(주소에 /p/ 포함)로 들어간 뒤 다시 누르세요.</p></details>
+    <details><summary>트래커에 주소만 붙여넣으면 안 되나요?</summary><p>A&amp;F가 서버의 자동 접속을 막고 있어서 대부분 실패합니다. 실패하면 상품 페이지 링크가 나오니, 그 페이지를 열고 북마크를 누르세요.</p></details>
+    <details><summary>핸드폰이나 엣지(Edge)에서도 되나요?</summary><p>핸드폰은 안 됩니다. 엣지·웨일도 북마크바에 같은 방식으로 끌어다 놓으면 대부분 동작하지만, 이 안내는 크롬 기준입니다.</p></details>
+    <details><summary>세아 표시를 잘못 눌렀어요</summary><p>같은 상품에서 [세아 표시 해제]를 누르면 됩니다.</p></details>
+  </div>
+
+  <a class="back" href="/">← 트래커로 돌아가기</a>
+</div>
+<script src="/bm.js"></script>
+<script>
+(function(){
+  var code = window.anfBookmarklet('ko');
+  var link = document.getElementById('bmLink');
+  link.setAttribute('href', code);
+  link.addEventListener('click', function(e){ e.preventDefault(); document.getElementById('bmMsg').textContent = '클릭이 아니라, 누른 채로 위쪽 북마크바까지 끌어다 놓아야 합니다.'; });
+  document.getElementById('copyBtn').addEventListener('click', function(){
+    var msg = document.getElementById('copyMsg');
+    function fallback(){ var ta = document.createElement('textarea'); ta.value = code; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); msg.textContent = '복사됨 — 이제 2-1의 ②, ③을 하세요'; } catch (e) { msg.textContent = '복사하지 못했습니다'; } ta.remove(); }
+    try { navigator.clipboard.writeText(code).then(function(){ msg.textContent = '복사됨 — 이제 2-1의 ②, ③을 하세요'; }, fallback); } catch (e) { fallback(); }
+  });
+})();
+</script>
+</body>
+</html>

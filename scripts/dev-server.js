@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { join, extname } from 'node:path';
 
 const root = new URL('..', import.meta.url).pathname;
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json' };
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png' };
 const port = Number(process.env.PORT || 3000);
 
 export function makeServer() {
