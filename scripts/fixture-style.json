@@ -1,0 +1,175 @@
+{
+"brand": "Hollister",
+"bs": "hol",
+"capturedAt": "2026-10-20T06:31:42.827Z",
+"care": [
+"ONLY NON-CHLORINE BLEACH",
+"LOW IRON IF NEEDED",
+"TUMBLE DRY LOW",
+"DO NOT DRY CLEAN",
+"MACHINE WASH COLD,WITH LIKE COLORS"
+],
+"category": "Men's \u203a Tops \u203a Long Sleeve Tops",
+"collectionId": "703402",
+"colors": [
+{
+"badges": [
+"New!"
+],
+"color": "faded black",
+"family": "Black",
+"finalSale": false,
+"flag": "regular",
+"id": "63859338",
+"list": 49.95,
+"offer": 49.95,
+"promo": "",
+"skus": [
+{
+"inv": 60,
+"label": "XL X Regular",
+"offer": 49.95,
+"p": "XL",
+"s": "Regular",
+"sku": "676131553",
+"status": "Available"
+},
+{
+"inv": 84,
+"label": "S X Regular",
+"offer": 49.95,
+"p": "S",
+"s": "Regular",
+"sku": "676131588",
+"status": "Available"
+},
+{
+"inv": 132,
+"label": "M X Regular",
+"offer": 49.95,
+"p": "M",
+"s": "Regular",
+"sku": "676131481",
+"status": "Available"
+},
+{
+"inv": 36,
+"label": "XS X Regular",
+"offer": 49.95,
+"p": "XS",
+"s": "Regular",
+"sku": "676131473",
+"status": "Available"
+},
+{
+"inv": 15,
+"label": "XXL X Regular",
+"offer": 49.95,
+"p": "XXL",
+"s": "Regular",
+"sku": "676131511",
+"status": "Available"
+},
+{
+"inv": 108,
+"label": "L X Regular",
+"offer": 49.95,
+"p": "L",
+"s": "Regular",
+"sku": "676131529",
+"status": "Available"
+}
+],
+"storeItem": "322-488-01212-900",
+"webItem": "703402/322-26044-01212-900"
+},
+{
+"badges": [
+"New!"
+],
+"color": "deep red",
+"family": "Red",
+"finalSale": false,
+"flag": "regular",
+"id": "63859336",
+"list": 49.95,
+"offer": 49.95,
+"promo": "",
+"skus": [
+{
+"inv": 72,
+"label": "M X Regular",
+"offer": 49.95,
+"p": "M",
+"s": "Regular",
+"sku": "676131545",
+"status": "Available"
+},
+{
+"inv": 10,
+"label": "XS X Regular",
+"offer": 49.95,
+"p": "XS",
+"s": "Regular",
+"sku": "676131490",
+"status": "Available"
+},
+{
+"inv": 9,
+"label": "XL X Regular",
+"offer": 49.95,
+"p": "XL",
+"s": "Regular",
+"sku": "676131570",
+"status": "Available"
+},
+{
+"inv": 60,
+"label": "L X Regular",
+"offer": 49.95,
+"p": "L",
+"s": "Regular",
+"sku": "676131561",
+"status": "Available"
+},
+{
+"inv": 36,
+"label": "S X Regular",
+"offer": 49.95,
+"p": "S",
+"s": "Regular",
+"sku": "676131537",
+"status": "Available"
+},
+{
+"inv": 9,
+"label": "XXL X Regular",
+"offer": 49.95,
+"p": "XXL",
+"s": "Regular",
+"sku": "676131502",
+"status": "Available"
+}
+],
+"storeItem": "322-488-01212-500",
+"webItem": "703402/322-26044-01212-500"
+}
+],
+"date": "2026-10-20",
+"department": "men's",
+"fabric": "BODY AND HOOD LINING: 70% COTTON, 30% RECYCLED POLYESTER",
+"gender": "M",
+"key": "hol-703402",
+"longDesc": "A comfortable hoodie in our signature soft fleece, with a washed look and quarter-zip closure. Front pouch pocket, long sleeves. Boxy Fit.",
+"name": "Hollister Feel Good Boxy Washed Quarter-Zip Hoodie",
+"productId": "63859338",
+"rating": null,
+"reviews": null,
+"shortDesc": "Part Of A Matching Set",
+"site": "www.hollisterco.com",
+"soldOut": false,
+"store": "wd",
+"units": 631,
+"url": "https://www.hollisterco.com/shop/us/p/hollister-feel-good-boxy-washed-quarter-zip-hoodie-63858527",
+"img": "https://img.hollisterco.com/is/image/anf/KIC_322-26044-01212-900_life1"
+}

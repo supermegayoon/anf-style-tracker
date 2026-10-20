@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>A&amp;F Style Tracker</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2323438A'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='700' font-size='14' text-anchor='middle' fill='white'%3EAF%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+
+/* Layout: two-pane spec board — watchlist rail on the left, the selected style's sheet on the right; numbers set in mono like a cutting ticket. */
+:root{
+  --bg:#F3F4F6; --surface:#FFFFFF; --sunk:#ECEEF2; --ink:#141C29; --muted:#5B6576; --line:#DCE0E6;
+  --accent:#23438A; --accent-ink:#FFFFFF; --accent-soft:#E2E8F5;
+  --good:#1E7A4C; --warn:#A86300; --bad:#B42318; --good-soft:#E3F2EA; --warn-soft:#FBEFD9; --bad-soft:#FBE6E3;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E131A; --surface:#151C26; --sunk:#111821; --ink:#E5E9EF; --muted:#93A0B3; --line:#263142;
+  --accent:#8FA9EA; --accent-ink:#0E131A; --accent-soft:#1C2944;
+  --good:#4FC48C; --warn:#E3A43C; --bad:#F2766B; --good-soft:#12291F; --warn-soft:#2B2210; --bad-soft:#2E1616; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E131A; --surface:#151C26; --sunk:#111821; --ink:#E5E9EF; --muted:#93A0B3; --line:#263142;
+  --accent:#8FA9EA; --accent-ink:#0E131A; --accent-soft:#1C2944;
+  --good:#4FC48C; --warn:#E3A43C; --bad:#F2766B; --good-soft:#12291F; --warn-soft:#2B2210; --bad-soft:#2E1616; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 40px}
+.wrap{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num,.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:var(--f-display);font-stretch:78%;margin:0;text-wrap:balance;letter-spacing:.005em}
+.label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+/* header */
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
+header.top h1{font-size:30px;font-weight:800;line-height:1.05}
+header.top h1 span{color:var(--accent)}
+header.top p{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.topright{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.status{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.on{background:var(--good)} .dot.off{background:var(--bad)}
+
+/* add bar */
+.addbar{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:8px}
+.addrow{display:flex;gap:8px;flex-wrap:wrap}
+.addrow input{flex:1 1 320px;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:var(--r);padding:10px 12px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:9px 14px;cursor:pointer;font-weight:600;white-space:nowrap}
+a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.6;cursor:progress}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ghost{background:transparent}
+.btn.small{padding:5px 10px;font-size:12px}
+.btn.danger{color:var(--bad)}
+.hint{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+.msg{font-size:13px;padding:8px 10px;border-radius:var(--r)}
+.msg.ok{background:var(--good-soft);color:var(--good)} .msg.err{background:var(--bad-soft);color:var(--bad)} .msg.info{background:var(--accent-soft);color:var(--accent)}
+.linklike{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font-weight:600;text-decoration:underline;text-underline-offset:2px}
+
+/* bookmarklet panel */
+.bm{border-top:1px dashed var(--line);padding-top:10px;display:grid;gap:10px}
+.bm ol{margin:0;padding-left:20px;display:grid;gap:4px;max-width:80ch}
+.bmlink{display:inline-block;background:var(--ink);color:var(--surface);padding:7px 12px;border-radius:999px;text-decoration:none;font-weight:700;font-size:13px;cursor:grab}
+.bmrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* main grid */
+.main{display:grid;grid-template-columns:360px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
+.rail{display:flex;flex-direction:column;gap:10px;min-width:0}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;padding:6px 12px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.search{flex:1 1 140px;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px}
+.list{display:flex;flex-direction:column;gap:6px}
+.item{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:2px 12px;align-items:start;text-align:left;width:100%;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 12px 8px 8px;cursor:pointer}
+.item:hover{border-color:var(--accent)}
+.item[aria-current="true"]{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.item .ph{grid-row:1/3}
+.item .nm{font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.item .sub{grid-column:2/4;display:flex;gap:4px 10px;flex-wrap:wrap;font-size:12px;color:var(--muted);align-items:center}
+.item .px{text-align:right;font-size:13px;white-space:nowrap}
+.ph{display:block;width:48px;aspect-ratio:4/5;max-width:100%;border-radius:4px;overflow:hidden;background:var(--sunk);border:1px solid var(--line)}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph.sm{width:28px}
+.tag{font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.06em;padding:2px 6px;border-radius:4px;background:var(--sunk);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
+.tag.anf{color:var(--ink)} .tag.hol{color:var(--accent)}
+.delta{font-family:var(--f-mono);font-size:12px}
+.delta.dn{color:var(--bad)} .delta.up{color:var(--good)}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:20px;color:var(--muted);display:grid;gap:6px}
+.empty b{color:var(--ink)}
+
+/* queue */
+.queue{display:flex;flex-direction:column;gap:6px}
+.qrow{display:flex;gap:8px;align-items:center;justify-content:space-between;font-size:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px}
+.qrow .u{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+.pill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.pill.pending{background:var(--warn-soft);color:var(--warn)} .pill.done{background:var(--good-soft);color:var(--good)} .pill.error{background:var(--bad-soft);color:var(--bad)}
+
+/* sheet */
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0;display:flex;flex-direction:column}
+.sheet section{padding:16px 18px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px;min-width:0}
+.sheet section:first-child{border-top:0}
+.shead{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:flex-start}
+.shead h2{font-size:26px;font-weight:800;line-height:1.1}
+.crumb{font-size:12px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.hero{display:flex;gap:14px;align-items:flex-start;min-width:0}
+.ph.lg{width:96px;flex:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0;align-content:flex-start}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 10px 3px 6px;font-size:12px;background:var(--surface);white-space:nowrap}
+.chip b{font-weight:600}
+.chip .num{color:var(--muted)}
+.gallery{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.gallery figure{margin:0;flex:0 0 96px;display:flex;flex-direction:column;gap:4px}
+.gallery .ph{width:96px}
+.gallery figcaption{font-size:11px;line-height:1.3;color:var(--muted);overflow-wrap:anywhere}
+.gallery figcaption b{display:block;color:var(--ink);font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.kpi{background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi .v{font-family:var(--f-mono);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi .v small{font-size:12px;color:var(--muted)}
+.kpi .s{font-size:12px;color:var(--muted)}
+.kpi .v.bad{color:var(--bad)} .kpi .v.good{color:var(--good)}
+@media (max-width:700px){.kpi:last-child:nth-child(odd){grid-column:1/-1}}
+.sechead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.sechead h3{font-size:17px;font-weight:700}
+
+/* grid */
+.gridwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r)}
+table.inv{border-collapse:collapse;width:100%;font-size:12px;min-width:max-content}
+table.inv th,table.inv td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+table.inv thead th{position:sticky;top:0;background:var(--sunk);font-family:var(--f-mono);font-weight:600;color:var(--muted);font-size:11px}
+table.inv th.c,table.inv td.c{text-align:left;position:sticky;left:0;background:var(--surface);z-index:1}
+table.inv thead th.c{background:var(--sunk);z-index:2}
+table.inv td.cell{font-family:var(--f-mono);font-variant-numeric:tabular-nums;min-width:52px}
+table.inv td.zero{color:var(--bad);font-weight:600}
+table.inv tr.tot td{font-weight:700;background:var(--sunk);border-bottom:0}
+table.inv tr.tot td.c{background:var(--sunk)}
+.cname{display:flex;align-items:center;gap:8px}
+.sw{width:12px;height:12px;border-radius:3px;border:1px solid var(--line);flex:none}
+.cprice{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.cprice.md{color:var(--bad)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);align-items:center}
+.ramp{display:inline-block;width:80px;height:8px;border-radius:2px;background:linear-gradient(90deg,var(--surface),var(--accent));border:1px solid var(--line);vertical-align:middle}
+
+/* curve */
+.curve{display:grid;gap:6px}
+.crow{display:grid;grid-template-columns:72px minmax(0,1fr) 92px;gap:8px;align-items:center;font-size:12px}
+.crow .bar{height:12px;background:var(--sunk);border-radius:2px;position:relative;overflow:hidden}
+.crow .bar i{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:2px}
+.crow .bar i.sold{background:var(--warn)}
+.crow .k{font-family:var(--f-mono);font-weight:600}
+.crow .n{font-family:var(--f-mono);text-align:right;color:var(--muted)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+@media (max-width:700px){.two{grid-template-columns:minmax(0,1fr)}}
+
+/* chart + log */
+.chart svg{width:100%;height:auto;display:block}
+.chart .axis{font-family:var(--f-mono);font-size:10px;fill:var(--muted)}
+.log{display:flex;flex-direction:column;font-size:13px}
+.log .ev{display:grid;grid-template-columns:86px minmax(0,1fr);gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.log .ev:last-child{border-bottom:0}
+.log .d{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.log .e{display:flex;flex-wrap:wrap;gap:4px 10px}
+.k-price{color:var(--bad);font-weight:600}
+.tag.sea{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.viewbar{display:flex;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;align-items:center}
+.viewbar .seg button{padding:8px 16px;font-size:13px}
+table.inv td.cell small{display:block;color:var(--muted);font-size:10px;font-weight:400}
+table.inv tr.grp td{background:var(--sunk);font-weight:700;text-align:left;font-family:var(--f-body);font-size:12px;letter-spacing:.04em}
+table.inv tr.sub td{font-weight:700;border-bottom:2px solid var(--line)}
+.linkbtn{background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer;text-align:left;max-width:280px;white-space:normal}
+.linkbtn:hover{color:var(--accent);text-decoration:underline}
+.wnote{font-size:12px;color:var(--muted);margin:0;max-width:80ch}
+@media (max-width:600px){.linkbtn{max-width:140px;font-size:12px}}
+#weekly .chart{max-width:900px} .k-new{color:var(--good);font-weight:600} .k-out{color:var(--warn);font-weight:600}
+
+/* spec */
+.spec{display:grid;grid-template-columns:120px minmax(0,1fr);gap:6px 14px;font-size:13px;margin:0}
+.spec dt{color:var(--muted)} .spec dd{margin:0;overflow-wrap:anywhere}
+.codes{display:flex;flex-direction:column;gap:2px;font-family:var(--f-mono);font-size:12px}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;background:var(--bad-soft);color:var(--bad);padding:8px 10px;border-radius:var(--r)}
+.note{font-size:12px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.item,.btn{transition:border-color .12s}}
+
+.adminp{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.adminp input{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:5px 10px;font-size:12px;width:160px}
+.status .linklike{font-size:12px;margin-left:6px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>A&amp;F <span>Style Tracker</span></h1>
+      <p data-i="sub"></p>
+    </div>
+    <div class="topright">
+      <div class="seg" role="group" aria-label="Language">
+        <button type="button" data-lang="ko" aria-pressed="true">한국어</button>
+        <button type="button" data-lang="en" aria-pressed="false">English</button>
+      </div>
+      <div class="status"><span class="dot" id="dot"></span><span id="statusText"></span>
+        <button type="button" class="linklike" id="adminBtn"></button>
+        <button type="button" class="linklike" id="adminOut" hidden data-i="ad_out"></button></div>
+      <form id="adminForm" class="adminp" hidden autocomplete="off">
+        <input id="adminKey" type="password" data-ph="ad_ph">
+        <button type="submit" class="btn small" data-i="ad_go"></button>
+        <span class="note" id="adminMsg" role="status"></span>
+      </form>
+    </div>
+  </header>
+
+  <form class="addbar" id="addForm" autocomplete="off">
+    <label class="label" for="addInput" data-i="add_label"></label>
+    <div class="addrow">
+      <input id="addInput" name="addInput">
+      <button class="btn primary" type="submit" id="addBtn" data-i="add_btn"></button>
+    </div>
+    <div id="addMsg" hidden></div>
+    <div class="hint">
+      <span data-i="hint_data"></span>
+      <span data-i="hint_url"></span>
+      <button type="button" class="linklike" id="bmToggle" aria-expanded="false" data-i="bm_toggle"></button>
+    </div>
+    <div class="bm" id="bmPanel" hidden>
+      <ol><li data-ih="bm_1"></li><li data-ih="bm_2"></li><li data-ih="bm_3"></li></ol>
+      <div class="bmrow">
+        <a class="bmlink" id="bmLink" href="#" data-i="bm_link"></a>
+        <button type="button" class="btn small" id="bmCopy" data-i="bm_copy"></button>
+        <span class="note" id="bmCopyMsg"></span>
+      </div>
+      <textarea id="bmCode" readonly hidden rows="3" style="width:100%;font-family:var(--f-mono);font-size:11px"></textarea>
+    </div>
+  </form>
+
+  <div class="viewbar">
+    <div class="seg" role="group" aria-label="View" id="viewSeg">
+      <button type="button" data-view="styles" aria-pressed="true" data-i="v_styles"></button>
+      <button type="button" data-view="weekly" aria-pressed="false" data-i="v_weekly"></button>
+    </div>
+  </div>
+
+  <div class="main" id="mainView">
+    <aside class="rail">
+      <div class="filters">
+        <div class="seg" role="group" aria-label="Brand" id="brandSeg">
+          <button type="button" data-brand="all" aria-pressed="true" data-i="f_all"></button>
+          <button type="button" data-brand="anf" aria-pressed="false">A&amp;F</button>
+          <button type="button" data-brand="hol" aria-pressed="false">Hollister</button>
+        </div>
+        <div class="seg" role="group" aria-label="Vendor" id="seaSeg">
+          <button type="button" data-sea="all" aria-pressed="true" data-i="g_all"></button>
+          <button type="button" data-sea="sea" aria-pressed="false" data-i="g_sea"></button>
+          <button type="button" data-sea="other" aria-pressed="false" data-i="g_other"></button>
+        </div>
+        <input class="search" id="q" type="search">
+      </div>
+      <div class="list" id="list"></div>
+    </aside>
+    <main class="sheet" id="sheet"></main>
+  </div>
+  <div class="sheet" id="weekly" hidden></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sum = a => a.reduce((x, y) => x + (y || 0), 0);
+const fmtN = n => n == null ? '–' : Number(n).toLocaleString('en-US');
+const fmt$ = n => n == null ? '–' : '$' + (Number.isInteger(n) ? n.toLocaleString('en-US') : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+
+/* ---------- language ---------- */
+const I18N = {
+  ko: {
+    sub: 'Abercrombie & Fitch · Hollister 상품의 컬러 × 사이즈별 재고 수량, 가격·할인, 소재를 모아 보고, 수집할 때마다 쌓이는 이력으로 판매 추정과 가격 변동을 봅니다.',
+    st_wait: '연결 중…', st_on: '저장소 연결됨', st_off: '저장소 연결 안 됨', st_lost: '저장소 연결이 끊겼습니다',
+    add_label: '상품 추가', add_ph: '상품 페이지 주소, 또는 북마클릿으로 복사한 데이터를 붙여넣기 (abercrombie.com · hollisterco.com)', add_btn: '추가', saving: '저장 중…',
+    hint_data: '데이터 붙여넣기 → 사진과 함께 바로 저장', hint_url: '주소만 넣기 → 수집 대기열에 올라가고, Claude가 수집해 채웁니다', bm_toggle: '북마클릿 설치 방법',
+    bm_1: '아래 버튼을 Chrome 북마크바로 끌어다 놓습니다. 끌기가 안 되면 <b>코드 복사</b>를 누르고, 새 북마크를 만들어 URL 칸에 붙여넣으세요.',
+    bm_2: 'abercrombie.com 또는 hollisterco.com 상품 페이지에서 그 북마크를 누르면 컬러별 사진까지 모아 클립보드에 복사합니다.',
+    bm_3: '이 페이지의 입력칸에 붙여넣고 <b>추가</b>를 누르면 저장됩니다. 같은 상품을 다른 날 다시 넣으면 이력이 쌓입니다.',
+    bm_link: 'A&F 수집', bm_copy: '코드 복사', bm_copied: '복사됨 — 새 북마크의 URL 칸에 붙여넣으세요', bm_select: '아래 코드를 선택해 복사하세요',
+    bm_click: '이 버튼은 북마크바로 끌어다 놓고, A&F·Hollister 상품 페이지에서 눌러야 동작합니다.',
+    f_all: '전체', search: '이름·카테고리·소재 검색', queue_label: '수집 대기열', q_wait: '대기', q_err: '실패', q_del: '대기열에서 삭제',
+    e_nodb_t: '저장소 연결 대기 중', e_nodb_s: 'claude.ai에 로그인한 상태로 열면 저장된 상품이 나타납니다.',
+    e_t: '아직 추적 중인 상품이 없습니다', e_s: '위 입력칸에 A&F·Hollister 상품 주소를 넣거나, 북마클릿으로 복사한 데이터를 붙여넣으면 여기에 쌓입니다.', e_f: '조건에 맞는 상품이 없습니다.',
+    sh_t: '왼쪽에서 상품을 고르면 여기 펼쳐집니다', sh_s: '컬러별 사진, 컬러 × 사이즈 재고표, 사이즈 비중, 가격·할인율, 소재·케어, 품번을 보여줍니다. 같은 상품을 다른 날 다시 수집하면 판매 추정, 가격 변동, 품절 이력이 함께 나타납니다.',
+    colors_n: n => n + '컬러', units_n: n => fmtN(n) + '개', out_n: n => '품절 ' + n,
+    captured: '수집', records: n => '기록 ' + n + '회', store: '스토어',
+    b_page: '상품 페이지 ↗', b_refresh: '다시 수집 요청', b_csv: 'CSV 받기', b_del: '삭제',
+    del_q: '이 상품과 수집 이력, 사진을 모두 삭제할까요?', del_yes: '삭제', del_no: '취소',
+    k_units: '총 재고', unit: '개', skus_n: n => n + ' SKU', k_colors: '컬러', md_n: n => '할인 중 ' + n + '컬러', all_full: '전 컬러 정상가',
+    k_price: '판매가', reg: '정가', upto: '최대', k_out: '품절 SKU', of_sku: '% of SKU',
+    k_sold: '판매 추정', sold_sub: (d, a, r) => d + '일 · 일평균 ' + fmtN(a) + (r ? ' · 입고 +' + fmtN(r) : ''), sold_wait: '다른 날 한 번 더 수집하면 계산됩니다',
+    g_title: '컬러 × 사이즈 재고', g_color: '컬러', g_price: '판매가', g_total: '합계', g_vs: '전회 대비', g_new: '신규', g_len: '기장/핏',
+    lg_units: '재고 수량', lg_more: '많음', lg_zero: '0 = 품절', lg_dot: '· = 해당 사이즈 없음', lg_sort: '재고가 많은 컬러 순',
+    c_inv: '사이즈별 재고 비중', c_sold: '사이즈별 판매 추정 비중', c_note: '수집 간 재고 감소분 합계 기준. 반품·이동도 섞일 수 있습니다.', c_wait: '같은 상품을 다른 날 한 번 더 수집하면, 재고가 줄어든 만큼을 사이즈별로 모아 실제로 팔린 사이즈 커브를 보여줍니다.',
+    h_title: '수집 이력', h_loading: '이력을 불러오는 중…', h_first: '첫 수집', h_sold: '판매 추정', h_recv: '입고', ev_new: '신규 컬러', ev_gone: '컬러 내려감', ev_out: n => '사이즈 ' + n + '개 품절',
+    ch_units: '총 재고', ch_price: '최저 판매가', ch_aria: '총 재고와 최저 판매가 추이',
+    sp: '스펙', sp_fab: '소재', sp_care: '케어', sp_desc: '설명', sp_dept: '부서', sp_coll: '콜렉션 ID', sp_rev: '리뷰', sp_rev_v: (r, n) => r + ' / 5 · ' + fmtN(n) + '건', sp_codes: '품번', sp_codes_h: '스토어 품번 · 웹 품번 · 컬러', sp_first: '처음 수집',
+    m_need: '상품 페이지 주소나 북마클릿 데이터를 붙여넣어 주세요.', m_nodb: '저장소에 연결되지 않았습니다. 로그인 상태로 페이지를 열어주세요.',
+    m_badjson: '데이터 형식이 올바르지 않습니다. 북마클릿으로 다시 복사해 주세요.', m_notours: 'A&F 수집 북마클릿 데이터가 아닙니다.',
+    m_saved: (nm, c, u, d, p) => nm + ' 저장됨 · ' + c + '컬러 · ' + fmtN(u) + '개 (' + d + ')' + (p ? ' · 사진 ' + p + '장' : ''),
+    m_noimg: ' · 사진은 편집 권한이 있는 사람만 저장할 수 있어 제외했습니다',
+    m_dupq: '이미 수집 대기 중인 주소입니다.', m_queued: '수집 대기열에 올렸습니다. Claude에게 "대기열 수집해줘"라고 하면 채워집니다. 즉시 보려면 북마클릿을 쓰세요.',
+    m_badurl: 'abercrombie.com 또는 hollisterco.com 상품 페이지 주소(/p/ 가 들어간 주소)를 넣어주세요.',
+    m_quota: '저장 공간이 가득 찼습니다. 오래된 상품을 삭제해 주세요.', m_fail: '저장에 실패했습니다.', m_deleted: nm => nm + ' 삭제됨', m_delfail: '삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+    m_reqq: '다시 수집 요청을 대기열에 올렸습니다.', m_reqfail: '요청을 저장하지 못했습니다.', m_nodl: '이 화면에서는 파일 저장을 쓸 수 없습니다.', m_dlfail: '파일을 저장하지 못했습니다.',
+    m_pasted: '[북마클릿 데이터] ',
+    v_styles: '상품별', v_weekly: '주간 리포트', g_all: '전체', g_sea: '세아', g_other: '타사',
+    b_sea_on: '세아 스타일로 표시', b_sea_off: '세아 표시 해제', m_sea_on: nm => nm + ' · 세아 스타일로 표시했습니다', m_sea_off: nm => nm + ' · 세아 표시를 해제했습니다', m_seafail: '표시를 바꾸지 못했습니다.',
+    w_title: '주간 판매 추정', w_sub: '수집과 수집 사이에 줄어든 재고를 판매로 보고, 주(월~일) 단위로 합산합니다. 추정 매출은 줄어든 수량 × 당시 판매가입니다. 입고와 반품이 섞이면 실제와 차이가 날 수 있습니다.',
+    w_lastwk: '지난주', w_thiswk: '이번 주 (진행 중)', w_sea_units: '세아 판매 추정', w_oth_units: '타사 판매 추정', w_share: '세아 비중', w_share_sub: '지난주 판매 추정 수량 기준', w_wow: p => '전주 대비 ' + (p > 0 ? '+' : '') + p + '%',
+    w_style: '스타일', w_stock: '현재 재고', w_st: '지난주 ST', w_sub_total: '소계', w_grp_sea: '세아 스타일', w_grp_oth: '타사 스타일',
+    w_none_t: '아직 주간 데이터가 없습니다', w_none_s: '같은 상품을 다른 날 한 번 더 수집하면, 그 사이 판매 추정이 이 표에 쌓입니다. 매일 자동 수집을 걸어두면 손대지 않아도 매일 쌓입니다.',
+    w_nomark: '세아로 표시된 스타일이 아직 없습니다. 상품별 화면에서 상품을 열고 "세아 스타일로 표시"를 눌러주세요.',
+    w_week: '주차', w_units: '판매 추정', w_rev: '추정 매출', w_recv: '입고', w_end: '주말 재고', w_open: '진행 중', w_start: '수집 시작', w_csv: '주간 CSV 받기',
+    w_chart_aria: '주별 판매 추정 수량, 세아와 타사', w_bad: n => '형식이 맞지 않는 수집 데이터 ' + n + '건은 계산에서 뺐습니다.', w_style_wk: '주간 판매 추정', w_empty_row: '수집 기록이 쌓이면 표시됩니다'
+  },
+  en: {
+    sub: 'Collects Abercrombie & Fitch and Hollister styles with on-hand units by color and size, price and markdown, and fabric. Every capture adds to the history, which drives sell-through estimates and price-change tracking.',
+    st_wait: 'Connecting…', st_on: 'Storage connected', st_off: 'Storage not connected', st_lost: 'Lost connection to storage',
+    add_label: 'Add a style', add_ph: 'Paste a product page URL or bookmarklet data (abercrombie.com · hollisterco.com)', add_btn: 'Add', saving: 'Saving…',
+    hint_data: 'Paste data → saved instantly with photos', hint_url: 'URL only → goes to the queue and Claude collects it', bm_toggle: 'How to install the bookmarklet',
+    bm_1: 'Drag the button below to your Chrome bookmarks bar. If dragging does not work, click <b>Copy code</b>, create a new bookmark, and paste it into the URL field.',
+    bm_2: 'On an abercrombie.com or hollisterco.com product page, click that bookmark. It gathers the data and a photo of each color and copies everything to your clipboard.',
+    bm_3: 'Paste it into the box on this page and click <b>Add</b>. Capture the same style again on another day to build its history.',
+    bm_link: 'A&F Capture', bm_copy: 'Copy code', bm_copied: 'Copied. Paste it into the URL field of a new bookmark.', bm_select: 'Select and copy the code below',
+    bm_click: 'Drag this button to your bookmarks bar, then click it on an A&F or Hollister product page.',
+    f_all: 'All', search: 'Search name, category, fabric', queue_label: 'Collection queue', q_wait: 'Queued', q_err: 'Failed', q_del: 'Remove from queue',
+    e_nodb_t: 'Waiting for storage', e_nodb_s: 'Open this page while signed in to claude.ai to see saved styles.',
+    e_t: 'No styles tracked yet', e_s: 'Paste an A&F or Hollister product URL above, or paste data copied with the bookmarklet, and it will appear here.', e_f: 'No styles match.',
+    sh_t: 'Pick a style on the left to open it here', sh_s: 'Shows photos by color, an inventory grid by color and size, size mix, price and markdown, fabric and care, and item numbers. Capture the same style again on another day to see estimated sales, price changes and sell-outs.',
+    colors_n: n => n + (n === 1 ? ' color' : ' colors'), units_n: n => fmtN(n) + ' units', out_n: n => n + ' sold out',
+    captured: 'Captured', records: n => n + (n === 1 ? ' capture' : ' captures'), store: 'store',
+    b_page: 'Product page ↗', b_refresh: 'Request re-capture', b_csv: 'Download CSV', b_del: 'Delete',
+    del_q: 'Delete this style with its history and photos?', del_yes: 'Delete', del_no: 'Cancel',
+    k_units: 'Total units', unit: 'units', skus_n: n => n + ' SKUs', k_colors: 'Colors', md_n: n => n + ' on markdown', all_full: 'All at full price',
+    k_price: 'Selling price', reg: 'Reg.', upto: 'up to', k_out: 'Sold-out SKUs', of_sku: '% of SKUs',
+    k_sold: 'Est. units sold', sold_sub: (d, a, r) => d + ' days · ' + fmtN(a) + '/day' + (r ? ' · received +' + fmtN(r) : ''), sold_wait: 'Capture again on another day to calculate',
+    g_title: 'Inventory by color × size', g_color: 'Color', g_price: 'Price', g_total: 'Total', g_vs: 'vs. last', g_new: 'New', g_len: 'Length / fit',
+    lg_units: 'Units', lg_more: 'more', lg_zero: '0 = sold out', lg_dot: '· = size not offered', lg_sort: 'Sorted by units',
+    c_inv: 'Size mix of stock on hand', c_sold: 'Size mix of estimated sales', c_note: 'Sum of unit decreases between captures. Returns and transfers can be mixed in.', c_wait: 'Capture the same style again on another day and the units that left stock are grouped by size into a sales size curve.',
+    h_title: 'Capture history', h_loading: 'Loading history…', h_first: 'First capture', h_sold: 'Est. sold', h_recv: 'Received', ev_new: 'New color', ev_gone: 'Color removed', ev_out: n => n + (n === 1 ? ' size sold out' : ' sizes sold out'),
+    ch_units: 'Total units', ch_price: 'Lowest price', ch_aria: 'Total units and lowest selling price over time',
+    sp: 'Specs', sp_fab: 'Fabric', sp_care: 'Care', sp_desc: 'Description', sp_dept: 'Department', sp_coll: 'Collection ID', sp_rev: 'Reviews', sp_rev_v: (r, n) => r + ' / 5 · ' + fmtN(n) + ' reviews', sp_codes: 'Item numbers', sp_codes_h: 'Store item · Web item · Color', sp_first: 'First captured',
+    m_need: 'Paste a product page URL or bookmarklet data.', m_nodb: 'Not connected to storage. Open this page while signed in.',
+    m_badjson: 'This data is not in the right format. Copy it again with the bookmarklet.', m_notours: 'This is not data from the A&F Capture bookmarklet.',
+    m_saved: (nm, c, u, d, p) => nm + ' saved · ' + c + ' colors · ' + fmtN(u) + ' units (' + d + ')' + (p ? ' · ' + p + ' photos' : ''),
+    m_noimg: ' · Photos were skipped because only people who can edit this page can store them',
+    m_dupq: 'This URL is already in the queue.', m_queued: 'Added to the queue. Ask Claude to "collect the queue" to fill it in. Use the bookmarklet to see it right away.',
+    m_badurl: 'Enter an abercrombie.com or hollisterco.com product page URL (one that contains /p/).',
+    m_quota: 'Storage is full. Delete older styles and try again.', m_fail: 'Could not save.', m_deleted: nm => nm + ' deleted', m_delfail: 'Could not delete. Try again in a moment.',
+    m_reqq: 'Re-capture request added to the queue.', m_reqfail: 'Could not save the request.', m_nodl: 'File downloads are not available in this view.', m_dlfail: 'Could not save the file.',
+    m_pasted: '[Bookmarklet data] ',
+    v_styles: 'By style', v_weekly: 'Weekly report', g_all: 'All', g_sea: 'Sae-A', g_other: 'Others',
+    b_sea_on: 'Mark as Sae-A style', b_sea_off: 'Unmark Sae-A', m_sea_on: nm => nm + ' · marked as a Sae-A style', m_sea_off: nm => nm + ' · Sae-A mark removed', m_seafail: 'Could not change the mark.',
+    w_title: 'Weekly estimated sales', w_sub: 'Units that left stock between captures count as sales and are summed by week (Mon–Sun). Estimated revenue is those units × the selling price at the time. Receipts and returns mixed in can make it differ from actual sales.',
+    w_lastwk: 'Last week', w_thiswk: 'This week (in progress)', w_sea_units: 'Sae-A est. units', w_oth_units: 'Others est. units', w_share: 'Sae-A share', w_share_sub: 'Of last week\'s estimated units', w_wow: p => (p > 0 ? '+' : '') + p + '% vs. prior week',
+    w_style: 'Style', w_stock: 'Units now', w_st: 'Last wk ST', w_sub_total: 'Subtotal', w_grp_sea: 'Sae-A styles', w_grp_oth: 'Other styles',
+    w_none_t: 'No weekly data yet', w_none_s: 'Capture the same style again on another day and the estimated sales in between appear here. A daily scheduled capture fills it in every day without manual work.',
+    w_nomark: 'No styles are marked as Sae-A yet. Open a style in the By style view and click "Mark as Sae-A style".',
+    w_week: 'Week', w_units: 'Est. units', w_rev: 'Est. revenue', w_recv: 'Received', w_end: 'End stock', w_open: 'in progress', w_start: 'first capture', w_csv: 'Download weekly CSV',
+    w_chart_aria: 'Estimated units sold by week, Sae-A and others', w_bad: n => n + ' captures with unexpected data were left out.', w_style_wk: 'Weekly estimated sales', w_empty_row: 'Appears once captures build up'
+  }
+};
+Object.assign(I18N.ko, {
+  hint_data: '북마클릿 데이터 붙여넣기 → 바로 저장', hint_url: '주소만 넣기 → 서버가 바로 수집해서 저장',
+  bm_2: 'abercrombie.com 또는 hollisterco.com 상품 페이지에서 그 북마크를 누르면 데이터가 트래커로 바로 저장됩니다.',
+  bm_3: '서버 수집이 막히는 상품도 북마클릿으로는 저장됩니다. 붙여넣기는 필요 없습니다.',
+  e_nodb_t: '불러오는 중…', e_nodb_s: '', st_wait: '연결 중…', st_on: '서버 연결됨', st_off: '서버에 연결하지 못했습니다',
+  sh_s: '대표 사진, 컬러 × 사이즈 재고표, 사이즈 비중, 가격·할인율, 소재·케어, 품번을 보여줍니다. 매일 자동으로 다시 수집하면서 판매 추정, 가격 변동, 품절 이력이 쌓입니다.',
+  b_refresh: '지금 다시 수집', capturing: '수집 중…',
+  m_saved2: (nm, c, u, d) => nm + ' 저장됨 · ' + c + '컬러 · ' + fmtN(u) + '개 (' + d + ')',
+  m_refreshed: (nm, u) => nm + ' 다시 수집함 · ' + fmtN(u) + '개',
+  m_cap_err: e => ({ bad_url: 'abercrombie.com 또는 hollisterco.com 상품 페이지 주소(/p/ 가 들어간 주소)를 넣어주세요.', blocked: 'A&F 사이트가 서버 접속을 막았습니다. 상품 페이지에서 북마클릿으로 저장해 주세요.', not_a_product_page: '상품 페이지를 읽지 못했습니다. 판매가 끝난 상품일 수 있습니다.', network: '서버에 연결하지 못했습니다.', checksum_mismatch: '데이터가 손상되었습니다. 북마클릿으로 다시 수집해 주세요.', not_tracker_data: 'A&F 수집 북마클릿 데이터가 아닙니다.' })[e] || ('수집하지 못했습니다 (' + e + ')'),
+  ad_btn: '관리자', ad_on: '관리자 모드', ad_ph: '관리자 비밀번호', ad_go: '확인', ad_out: '나가기', ad_ok: '관리자 모드로 전환했습니다.', ad_bad: '비밀번호가 맞지 않습니다.',
+  w_none_s: '매일 오전 자동으로 다시 수집해서 쌓입니다. 상품을 추가한 다음 날부터 판매 추정이 나타납니다.',
+  w_nomark: '세아로 표시된 스타일이 아직 없습니다. 관리자 모드에서 상품을 열고 "세아 스타일로 표시"를 눌러주세요.'
+});
+Object.assign(I18N.en, {
+  hint_data: 'Paste bookmarklet data → saved instantly', hint_url: 'URL only → the server collects and saves it right away',
+  bm_2: 'On an abercrombie.com or hollisterco.com product page, click that bookmark. The data is saved to the tracker directly.',
+  bm_3: 'Styles the server cannot reach can still be saved this way. No pasting needed.',
+  e_nodb_t: 'Loading…', e_nodb_s: '', st_wait: 'Connecting…', st_on: 'Server connected', st_off: 'Could not reach the server',
+  sh_s: 'Shows the main photo, an inventory grid by color and size, size mix, price and markdown, fabric and care, and item numbers. Daily automatic captures build up estimated sales, price changes and sell-outs.',
+  b_refresh: 'Capture again now', capturing: 'Capturing…',
+  m_saved2: (nm, c, u, d) => nm + ' saved · ' + c + ' colors · ' + fmtN(u) + ' units (' + d + ')',
+  m_refreshed: (nm, u) => nm + ' captured again · ' + fmtN(u) + ' units',
+  m_cap_err: e => ({ bad_url: 'Enter an abercrombie.com or hollisterco.com product page URL (one that contains /p/).', blocked: 'The A&F site blocked the server. Save this style with the bookmarklet from its product page.', not_a_product_page: 'Could not read a product page. The style may no longer be sold.', network: 'Could not reach the server.', checksum_mismatch: 'The data was damaged. Capture it again with the bookmarklet.', not_tracker_data: 'This is not data from the A&F Capture bookmarklet.' })[e] || ('Could not capture (' + e + ')'),
+  ad_btn: 'Admin', ad_on: 'Admin mode', ad_ph: 'Admin password', ad_go: 'Enter', ad_out: 'Exit', ad_ok: 'Admin mode on.', ad_bad: 'That password is not right.',
+  w_none_s: 'Styles are captured again automatically every morning. Estimated sales appear from the day after a style is added.',
+  w_nomark: 'No styles are marked as Sae-A yet. In admin mode, open a style and click "Mark as Sae-A style".'
+});
+let LANG = 'ko';
+try { const v = localStorage.getItem('anf-lang'); if (v === 'en' || v === 'ko') LANG = v; } catch (e) {}
+const t = (k, ...a) => { const v = I18N[LANG][k]; return typeof v === 'function' ? v(...a) : (v == null ? k : v); };
+function applyStatic(){
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-i]').forEach(el => { el.textContent = t(el.dataset.i); });
+  document.querySelectorAll('[data-ih]').forEach(el => { el.innerHTML = t(el.dataset.ih); });
+  $('#addInput').placeholder = t('add_ph'); $('#q').placeholder = t('search'); $('#q').setAttribute('aria-label', t('search'));
+  document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === LANG)));
+  $('#bmLink').setAttribute('href', buildBM());
+  $('#statusText').textContent = t(state.statusKey);
+  document.querySelectorAll('[data-ph]').forEach(el => { el.placeholder = t(el.dataset.ph); });
+  applyAdmin();
+}
+
+/* ---------- constants ---------- */
+const BRAND = { anf: 'A&F', hol: 'HCO', gh: 'GH' };
+const FAMILY = { Black:'#1d1d1f', White:'#f2efe8', Grey:'#9aa0a6', Gray:'#9aa0a6', Blue:'#3b5b9a', Navy:'#1f2c4c', Green:'#4f6b3a', Brown:'#7a5233', Tan:'#c2a27a', Beige:'#d8c6a6', Red:'#b23a32', Pink:'#e3a1b4', Purple:'#6e4f8f', Yellow:'#e2c14a', Orange:'#d97a32', Cream:'#efe6d2', Multi:'linear-gradient(135deg,#d97a32,#3b5b9a,#4f6b3a)' };
+const swatch = f => '<span class="sw" style="background:' + (FAMILY[f] || 'var(--sunk)') + '" title="' + esc(f) + '"></span>';
+const heroUrl = (s, w) => s && s.img ? s.img + '?wid=' + w + '&qlt=80' : '';
+const photo = (c, cls) => c && c.thumb ? '<span class="ph ' + (cls || '') + '"><img src="' + esc(c.thumb) + '" alt="' + esc(c.color) + '" loading="lazy" referrerpolicy="no-referrer"></span>'
+  : '<span class="ph ' + (cls || '') + '" style="background:' + (FAMILY[c && c.family] || 'var(--sunk)') + ';opacity:.55"></span>';
+const SIZE_ORDER = ['XXXS','XXS','XS','S','M','L','XL','XXL','XXXL','1X','2X','3X','ONE SIZE','OS'];
+const SEC_ORDER = ['XXShort','XShort','Extra Short','Short','Petite','Regular','Long','XLong','Extra Long','Tall'];
+const rankP = p => { const u = String(p).toUpperCase(); const i = SIZE_ORDER.indexOf(u); if (i >= 0) return [0, i]; const n = parseFloat(u); return isNaN(n) ? [2, u] : [1, n]; };
+const cmpP = (a, b) => { const x = rankP(a), y = rankP(b); return x[0] - y[0] || (x[1] < y[1] ? -1 : x[1] > y[1] ? 1 : 0); };
+const cmpS = (a, b) => { const i = SEC_ORDER.indexOf(a), j = SEC_ORDER.indexOf(b); return (i < 0 ? 99 : i) - (j < 0 ? 99 : j) || String(a).localeCompare(String(b)); };
+
+
+const state = { styles: [], daily: {}, sel: null, brand: 'all', q: '', sec: 'all', hist: [], histKey: null, confirmDel: false, statusKey: 'st_wait', view: 'styles', sea: 'all', badHist: 0, loaded: false, loadedAt: 0, admin: '' };
+
+/* ---------- bookmarklet ---------- */
+const SITE = location.origin;
+const EXTRACT = "(() => { const st = window['APOLLO_STATE__product-mfe-web-service-ProductPageFrontend-config']; if (!st) return { v: 1, ok: false, error: 'no_product_state', url: location.href }; const rq = st.CACHE.ROOT_QUERY; const ck = Object.keys(rq).find(k => k.startsWith('collection(')); const bk = Object.keys(rq).find(k => k.startsWith('bazaarVoice(')); if (!ck) return { v: 1, ok: false, error: 'no_collection', url: location.href }; const args = JSON.parse(ck.slice(ck.indexOf('(') + 1, -1)); const coll = rq[ck].collection || {}; const prods = coll.products || []; const allSkus = coll.skus || []; const rv = bk ? rq[bk] : null; const host = location.hostname; const bs = host.includes('hollister') ? 'hol' : (host.includes('gillyhicks') ? 'gh' : 'anf'); const brand = { hol: 'Hollister', gh: 'Gilly Hicks', anf: 'Abercrombie & Fitch' }[bs]; const num = s => { if (s == null || s === '') return null; const n = parseFloat(String(s).replace(/[^0-9.]/g, '')); return isNaN(n) ? null : n; }; const colors = prods.map(p => { const lp = (p.prices && p.prices.list) || {}; const skus = allSkus.filter(s => s.productId === p.productId).map(s => { const sp = (s.prices && s.prices.list) || {}; return { sku: s.shortSku, p: (s.sizePrimary || '').replace(/_p$/, ''), s: (s.sizeSecondary || '').replace(/_s$/, ''), label: s.fullSizeLabel || '', inv: typeof s.inventory === 'number' ? s.inventory : null, status: s.inventoryStatus || '', offer: sp.offerPriceUSD ?? num(sp.discountPrice || sp.originalPrice) }; }); const img = (p.imageSet && p.imageSet.prod && p.imageSet.prod[0]) || (p.orderedImages && p.orderedImages[0]) || {}; return { id: p.productId, color: p.swatchName || p.colorFamily || '', family: p.colorFamily || '', webItem: p.webItemNumber || '', storeItem: p.storeItemNumber || '', list: lp.listPriceUSD ?? num(lp.originalPrice), offer: lp.offerPriceUSD ?? num(lp.discountPrice || lp.originalPrice), flag: p.priceFlag || '', promo: p.merchPromoMessage || '', finalSale: !!p.isFinalSale, badges: (p.badges || []).map(b => b.label).filter(Boolean), img: (img.mainImageSrc || img.thumbnailSrc || '').split('?')[0], skus }; }); const p0 = prods.find(p => p.productId === args.productId) || prods[0] || {}; const now = new Date(); const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(now); const key = bs + '-' + args.collectionId; const sum = a => a.reduce((x, y) => x + (y || 0), 0); const hist = { key, date, at: now.toISOString(), units: sum(colors.map(c => sum(c.skus.map(s => s.inv)))), c: {} }; colors.forEach(c => { const sz = {}; c.skus.forEach(s => { sz[s.label || s.sku] = s.inv; }); hist.c[c.id] = { n: c.color, o: c.offer, l: c.list, u: sum(c.skus.map(s => s.inv)), s: sz }; }); const canon = v => v && typeof v === 'object' ? '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}' : JSON.stringify(v); const cstr = canon(hist.c); let hh = 2166136261; for (let i = 0; i < cstr.length; i++) { hh ^= cstr.charCodeAt(i); hh = Math.imul(hh, 16777619) >>> 0; } hist.ck = hh; const style = { key, brand, bs, site: host, store: (location.pathname.match(/\\/shop\\/([a-z]+)\\//) || [])[1] || '', url: location.origin + '/shop/us/p/' + (location.pathname.split('/p/')[1] || ''), collectionId: args.collectionId, productId: args.productId, name: p0.productNameEn || p0.productName || document.title, department: p0.departmentName || '', gender: p0.gender || '', category: (p0.breadcrumbCategoryHierarchy || []).map(c => c.categoryName_EN || c.categoryName).filter(Boolean).slice(1).join(' › '), shortDesc: p0.shortDescription || '', longDesc: p0.longDescription || '', fabric: p0.fabricDetails || '', care: (p0.careDetailsList || []).map(c => c.value.trim()), rating: rv ? rv.averageOverallRating : null, reviews: rv ? rv.totalReviewCount : null, soldOut: !!coll.isSoldOut, capturedAt: hist.at, date, units: hist.units, colors, img: (((p0.orderedImages && p0.orderedImages[0]) || (p0.imageSet && p0.imageSet.prod && p0.imageSet.prod[0]) || {}).mainImageSrc || '').split('?')[0] }; return { v: 1, ok: true, kind: 'anf-tracker', style, hist }; })()";
+// Runs on the A&F / Hollister page, never here. Self-contained: it is serialized into the bookmark.
+function bmMain(L, SITE, getR){
+  var T = L === 'en'
+    ? { notpdp: 'A&F Capture: click this on a product page', sending: 'Saving to the tracker…', saved: 'Saved', open: 'Open in tracker', fail: 'Could not save', close: 'Close', colors: ' colors · ', units: ' units' }
+    : { notpdp: 'A&F 수집: 상품 페이지에서 눌러주세요', sending: '트래커에 저장하는 중…', saved: '저장됨', open: '트래커에서 보기', fail: '저장하지 못했습니다', close: '닫기', colors: '컬러 · ', units: '개' };
+  var r; try { r = getR(); } catch (e) { r = { ok: false, error: String(e) }; }
+  if (!r || !r.ok) { alert(T.notpdp + ' (' + (r && r.error) + ')'); return; }
+  r.style.colors.forEach(function(c){ delete c.img; });
+  var old = document.getElementById('__anf_capture'); if (old) old.remove();
+  var d = document.createElement('div'); d.id = '__anf_capture';
+  d.style.cssText = 'position:fixed;z-index:2147483647;right:16px;bottom:16px;width:340px;max-width:calc(100vw - 32px);background:#141C29;color:#fff;font:14px/1.5 system-ui,sans-serif;padding:14px;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.35)';
+  var m = document.createElement('div'); m.style.fontWeight = '600'; m.textContent = r.style.name;
+  var m2 = document.createElement('div'); m2.style.cssText = 'opacity:.75;font-size:12px'; m2.textContent = r.style.colors.length + T.colors + r.style.units.toLocaleString() + T.units;
+  var s = document.createElement('div'); s.style.cssText = 'margin-top:8px;font-size:13px'; s.textContent = T.sending;
+  var row = document.createElement('div'); row.style.cssText = 'display:flex;gap:10px;margin-top:10px;align-items:center';
+  var a = document.createElement('a'); a.textContent = T.open; a.target = '_blank'; a.rel = 'noopener'; a.style.cssText = 'color:#9db4ff;font-weight:600;display:none';
+  var b2 = document.createElement('button'); b2.textContent = T.close; b2.style.cssText = 'padding:4px 12px;cursor:pointer'; b2.onclick = function(){ d.remove(); };
+  row.append(a, b2); d.append(m, m2, s, row); document.body.appendChild(d);
+  fetch(SITE + '/api/ingest', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(r) })
+    .then(function(res){ return res.json(); })
+    .then(function(j){
+      if (j && j.ok) { s.textContent = '✓ ' + T.saved + ' (' + j.date + ')'; a.href = SITE + '/#' + j.key; a.style.display = 'inline'; }
+      else s.textContent = T.fail + ' (' + (j && j.error) + ')';
+    })
+    .catch(function(e){ s.textContent = T.fail + ' (' + e + ')'; });
+}
+function buildBM(){
+  return 'javascript:' + encodeURIComponent('(' + bmMain.toString() + ')(' + JSON.stringify(LANG) + ',' + JSON.stringify(SITE) + ',function(){return ' + EXTRACT + '})');
+}
+
+/* ---------- add ---------- */
+
+function showMsg(kind, text){ const m = $('#addMsg'); m.className = 'msg ' + kind; m.textContent = text; m.hidden = false; }
+$('#bmLink').addEventListener('click', e => { e.preventDefault(); showMsg('info', t('bm_click')); });
+$('#bmToggle').addEventListener('click', e => { const p = $('#bmPanel'); p.hidden = !p.hidden; e.currentTarget.setAttribute('aria-expanded', String(!p.hidden)); });
+$('#bmCopy').addEventListener('click', () => {
+  const code = buildBM(), ta = $('#bmCode'); ta.value = code;
+  const fb = () => { ta.hidden = false; ta.select(); $('#bmCopyMsg').textContent = t('bm_select'); };
+  try { navigator.clipboard.writeText(code).then(() => { $('#bmCopyMsg').textContent = t('bm_copied'); }, fb); } catch (e) { fb(); }
+});
+let pasted = null;
+$('#addInput').addEventListener('paste', e => {
+  const tx = (e.clipboardData || window.clipboardData).getData('text');
+  if (tx && tx.trim().startsWith('{')) { e.preventDefault(); pasted = tx.trim(); let nm = ''; try { nm = JSON.parse(pasted).style.name; } catch (x) {} $('#addInput').value = t('m_pasted') + nm; }
+  else pasted = null;
+});
+$('#addInput').addEventListener('input', () => { pasted = null; });
+$('#addForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const raw = pasted || $('#addInput').value.trim();
+  if (!raw) { showMsg('err', t('m_need')); return; }
+  const btn = $('#addBtn'); btn.disabled = true; btn.textContent = t('capturing');
+  try {
+    let j;
+    if (raw.startsWith('{')) {
+      let body; try { body = JSON.parse(raw); } catch (x) { showMsg('err', t('m_badjson')); return; }
+      j = await api('/api/ingest', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    } else {
+      showMsg('info', t('capturing'));
+      j = await captureUrl(raw);
+    }
+    if (!j.ok) { showMsg('err', t('m_cap_err', j.error)); return; }
+    const key = j.key || (j.style && j.style.key);
+    const nm = j.name || (j.style && j.style.name), cols = j.colors || (j.style && j.style.colors.length), units = j.units != null ? j.units : (j.hist && j.hist.units), date = j.date || (j.hist && j.hist.date);
+    showMsg('ok', t('m_saved2', nm, cols, units, date));
+    $('#addInput').value = ''; pasted = null;
+    await loadAll(); state.sel = key; state.histKey = null; state.view = 'styles'; render();
+  } finally { btn.disabled = false; btn.textContent = t('add_btn'); }
+});
+
+/* ---------- derived ---------- */
+function stats(s){
+  const cs = s.colors || [];
+  const offers = cs.map(c => c.offer).filter(v => v != null), lists = cs.map(c => c.list).filter(v => v != null);
+  const skus = cs.flatMap(c => c.skus || []);
+  const md = cs.filter(c => c.list && c.offer != null && c.offer < c.list);
+  return { units: sum(skus.map(k => k.inv)), colors: cs.length,
+    minO: offers.length ? Math.min(...offers) : null, maxO: offers.length ? Math.max(...offers) : null, maxL: lists.length ? Math.max(...lists) : null,
+    mdColors: md.length, deepest: md.length ? Math.max(...md.map(c => 1 - c.offer / c.list)) : 0,
+    out: skus.filter(k => k.inv === 0).length, skus: skus.length };
+}
+function diffHist(a, b){
+  let sold = 0, recv = 0, rev = 0; const ev = [];
+  const ids = new Set([...Object.keys(a.c || {}), ...Object.keys(b.c || {})]);
+  ids.forEach(id => {
+    const x = (a.c || {})[id], y = (b.c || {})[id];
+    if (!x && y) { ev.push({ k: 'new', t: t('ev_new') + ' ' + y.n }); return; }
+    if (x && !y) { ev.push({ k: 'out', t: t('ev_gone') + ' ' + x.n }); return; }
+    if (x.o != null && y.o != null && x.o !== y.o) ev.push({ k: 'price', t: y.n + ' ' + fmt$(x.o) + ' → ' + fmt$(y.o) });
+    let outs = 0, sc = 0;
+    Object.keys(Object.assign({}, x.s, y.s)).forEach(sz => {
+      const p = x.s[sz] || 0, q = y.s[sz] || 0;
+      if (q < p) sc += p - q; else if (q > p) recv += q - p;
+      if (p > 0 && q === 0) outs++;
+    });
+    sold += sc; rev += sc * (y.o || 0);
+    if (outs) ev.push({ k: 'out', t: y.n + ' ' + t('ev_out', outs) });
+  });
+  return { sold, recv, rev, ev };
+}
+function fmtTime(iso){ if (!iso) return '–'; try { return new Intl.DateTimeFormat(LANG === 'en' ? 'en-US' : 'ko-KR', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso)); } catch (e) { return iso.slice(0, 16); } }
+
+/* ---------- render ---------- */
+function render(){
+  const wk = state.view === 'weekly';
+  $('#mainView').hidden = wk; $('#weekly').hidden = !wk;
+  document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === state.view)));
+  if (wk) renderWeekly(); else { renderList(); renderSheet(); }
+}
+function filtered(){
+  const q = state.q.toLowerCase();
+  return state.styles.filter(s => (state.brand === 'all' || s.bs === state.brand) && (state.sea === 'all' || (state.sea === 'sea') === !!s.seaa) &&
+    (!q || [s.name, s.category, s.fabric, s.department].join(' ').toLowerCase().includes(q)))
+    .sort((a, b) => (b.capturedAt || '').localeCompare(a.capturedAt || ''));
+}
+function renderList(){
+  const el = $('#list');
+  if (!state.loaded) { el.innerHTML = '<div class="empty"><b>' + esc(t('e_nodb_t')) + '</b></div>'; return; }
+  const rows = filtered();
+  if (!state.styles.length) { el.innerHTML = '<div class="empty"><b>' + esc(t('e_t')) + '</b><span>' + esc(t('e_s')) + '</span></div>'; return; }
+  if (!rows.length) { el.innerHTML = '<div class="empty">' + esc(t('e_f')) + '</div>'; return; }
+  el.innerHTML = rows.map(s => {
+    const st = stats(s);
+    const px = st.minO == null ? '–' : (st.minO === st.maxO ? fmt$(st.minO) : fmt$(st.minO) + '–' + fmt$(st.maxO));
+    const lead = (s.colors || []).find(c => c.id === s.productId) || (s.colors || [])[0];
+    return '<button type="button" class="item" data-key="' + esc(s.key) + '" aria-current="' + (s.key === state.sel) + '">' +
+      photo({ thumb: heroUrl(s, 120), color: s.name, family: lead && lead.family }) +
+      '<span class="nm">' + esc(s.name) + '</span>' +
+      '<span class="px num">' + px + (st.mdColors ? '<br><span style="color:var(--bad);font-size:11px">−' + Math.round(st.deepest * 100) + '%</span>' : '') + '</span>' +
+      '<span class="sub"><span class="tag ' + esc(s.bs) + '">' + esc(BRAND[s.bs] || s.bs) + '</span>' + (s.seaa ? '<span class="tag sea">SAE-A</span>' : '') + '<span>' + esc(s.category || s.department) + '</span>' +
+      '<span class="num">' + esc(t('colors_n', st.colors)) + ' · ' + esc(t('units_n', st.units)) + '</span>' +
+      (st.out ? '<span class="num" style="color:var(--warn)">' + esc(t('out_n', st.out)) + '</span>' : '') +
+      '<span class="num">' + esc(s.date || '') + '</span></span></button>';
+  }).join('');
+}
+function kpi(l, v, sub, cls){ return '<div class="kpi"><span class="label">' + esc(l) + '</span><span class="v ' + (cls || '') + '">' + v + '</span><span class="s">' + esc(sub || '') + '</span></div>'; }
+function renderSheet(){
+  const el = $('#sheet');
+  const s = state.styles.find(x => x.key === state.sel) || filtered()[0];
+  if (!s) { el.innerHTML = '<section><div class="label">' + esc(t('sp')) + '</div><h2 style="font-size:22px">' + esc(t('sh_t')) + '</h2><p class="note" style="max-width:62ch;margin:0">' + esc(t('sh_s')) + '</p></section>'; return; }
+  if (s.key !== state.sel) state.sel = s.key;
+  loadHist(s.key);
+  const st = stats(s), hist = state.hist.filter(h => h.key === s.key);
+  const first = hist[0], last = hist[hist.length - 1];
+  let period = null;
+  if (hist.length >= 2) {
+    let sold = 0, recv = 0;
+    for (let i = 1; i < hist.length; i++) { const d = diffHist(hist[i - 1], hist[i]); sold += d.sold; recv += d.recv; }
+    const days = Math.max(1, Math.round((new Date(last.date) - new Date(first.date)) / 864e5));
+    period = { sold, recv, days };
+  }
+  const pxTxt = st.minO == null ? '–' : (st.minO === st.maxO ? fmt$(st.minO) : fmt$(st.minO) + '–' + fmt$(st.maxO));
+  const secs = [...new Set((s.colors || []).flatMap(c => (c.skus || []).map(k => k.s)).filter(Boolean))].sort(cmpS);
+  if (state.sec !== 'all' && !secs.includes(state.sec)) state.sec = 'all';
+  const colsSorted = (s.colors || []).slice().sort((a, b) => sum(b.skus.map(k => k.inv)) - sum(a.skus.map(k => k.inv)));
+
+  let h = '<section><div class="shead"><div style="display:flex;flex-direction:column;gap:6px;min-width:0">' +
+    '<div class="crumb"><span class="tag ' + esc(s.bs) + '">' + esc(s.brand) + '</span>' + (s.seaa ? '<span class="tag sea">SAE-A</span>' : '') + '<span>' + esc(s.category) + '</span>' + (s.shortDesc ? '<span>· ' + esc(s.shortDesc) + '</span>' : '') + '</div>' +
+    '<h2>' + esc(s.name) + '</h2>' +
+    '<div class="crumb"><span class="mono">' + esc(t('captured')) + ' ' + esc(fmtTime(s.capturedAt)) + '</span><span>· ' + esc(t('records', hist.length)) + '</span>' + (s.store && s.store !== 'us' ? '<span>· ' + esc(t('store')) + ' ' + esc(s.store) + '</span>' : '') + '</div></div>' +
+    '<div class="actions"><a class="btn small" href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(t('b_page')) + '</a>' +
+    (state.admin ? '<button type="button" class="btn small' + (s.seaa ? '' : ' primary') + '" id="seaToggle">' + esc(t(s.seaa ? 'b_sea_off' : 'b_sea_on')) + '</button>' : '') +
+    '<button type="button" class="btn small" id="reqRefresh">' + esc(t('b_refresh')) + '</button>' +
+    '<button type="button" class="btn small" id="csv">' + esc(t('b_csv')) + '</button>' +
+    (state.admin ? '<button type="button" class="btn small danger" id="del">' + esc(t('b_del')) + '</button>' : '') + '</div></div>' +
+    (state.confirmDel ? '<div class="confirm">' + esc(t('del_q')) + ' <button type="button" class="btn small danger" id="delYes">' + esc(t('del_yes')) + '</button><button type="button" class="btn small" id="delNo">' + esc(t('del_no')) + '</button></div>' : '') +
+    '<div class="hero">' + (s.img ? photo({ thumb: heroUrl(s, 240), color: s.name }, 'lg') : '') + '<div class="chips">' + colsSorted.map(c => {
+      const md = c.list && c.offer != null && c.offer < c.list;
+      return '<span class="chip">' + swatch(c.family) + '<b>' + esc(c.color) + '</b>' +
+        '<span class="num"' + (md ? ' style="color:var(--bad)"' : '') + '>' + fmt$(c.offer) + '</span><span class="num">' + fmtN(sum(c.skus.map(k => k.inv))) + '</span></span>';
+    }).join('') + '</div></div>' +
+    '<div class="kpis">' +
+      kpi(t('k_units'), fmtN(st.units) + ' <small>' + esc(t('unit')) + '</small>', t('skus_n', st.skus)) +
+      kpi(t('k_colors'), st.colors, st.mdColors ? t('md_n', st.mdColors) : t('all_full')) +
+      kpi(t('k_price'), pxTxt, st.maxL != null ? t('reg') + ' ' + fmt$(st.maxL) + (st.mdColors ? ' · ' + t('upto') + ' −' + Math.round(st.deepest * 100) + '%' : '') : '', st.mdColors ? 'bad' : '') +
+      kpi(t('k_out'), st.out, st.skus ? Math.round(st.out / st.skus * 100) + t('of_sku') : '', st.out ? 'bad' : '') +
+      (period ? kpi(t('k_sold'), fmtN(period.sold), t('sold_sub', period.days, Math.round(period.sold / period.days), period.recv)) : kpi(t('k_sold'), '–', t('sold_wait'))) +
+    '</div></section>';
+
+  // inventory grid
+  const sizes = [...new Set((s.colors || []).flatMap(c => (c.skus || []).map(k => k.p || k.label)))].sort(cmpP);
+  const prevH = hist.length >= 2 ? hist[hist.length - 2] : null;
+  const pick = (c, p) => (c.skus || []).filter(k => (k.p || k.label) === p && (state.sec === 'all' || k.s === state.sec));
+  const cell = (c, p) => sum(pick(c, p).map(k => k.inv));
+  let max = 0; (s.colors || []).forEach(c => sizes.forEach(p => { max = Math.max(max, cell(c, p)); }));
+  h += '<section><div class="sechead"><h3>' + esc(t('g_title')) + '</h3>' +
+    (secs.length > 1 ? '<div class="seg" role="group" aria-label="' + esc(t('g_len')) + '">' + ['all'].concat(secs).map(x => '<button type="button" data-sec="' + esc(x) + '" aria-pressed="' + (state.sec === x) + '">' + esc(x === 'all' ? t('g_total') : x) + '</button>').join('') + '</div>' : '') +
+    '</div><div class="gridwrap"><table class="inv"><thead><tr><th class="c">' + esc(t('g_color')) + '</th><th>' + esc(t('g_price')) + '</th>' + sizes.map(p => '<th>' + esc(p) + '</th>').join('') + '<th>' + esc(t('g_total')) + '</th>' + (prevH ? '<th>' + esc(t('g_vs')) + '</th>' : '') + '</tr></thead><tbody>' +
+    colsSorted.map(c => {
+      const tot = sum(sizes.map(p => cell(c, p)));
+      const pc = prevH && prevH.c[c.id];
+      const d = pc ? tot - pc.u : null;
+      const md = c.list && c.offer != null && c.offer < c.list;
+      return '<tr><td class="c"><span class="cname">' + swatch(c.family) + '<span>' + esc(c.color) + '</span>' + (c.badges || []).map(b => '<span class="tag">' + esc(b) + '</span>').join('') + '</span></td>' +
+        '<td><span class="cprice' + (md ? ' md' : '') + '">' + fmt$(c.offer) + (md ? ' <s style="color:var(--muted)">' + fmt$(c.list) + '</s>' : '') + '</span></td>' +
+        sizes.map(p => { if (!pick(c, p).length) return '<td class="cell" style="color:var(--muted)">·</td>'; const v = cell(c, p); const pct = max ? Math.round(v / max * 70) : 0;
+          return '<td class="cell' + (v === 0 ? ' zero' : '') + '" style="background:color-mix(in srgb, var(--accent) ' + pct + '%, var(--surface));' + (pct > 42 ? 'color:var(--accent-ink)' : '') + '">' + fmtN(v) + '</td>'; }).join('') +
+        '<td class="cell"><b>' + fmtN(tot) + '</b></td>' +
+        (prevH ? '<td class="cell">' + (d == null ? '<span class="tag">' + esc(t('g_new')) + '</span>' : (state.sec !== 'all' ? '–' : '<span class="delta ' + (d < 0 ? 'dn' : d > 0 ? 'up' : '') + '">' + (d > 0 ? '+' : '') + fmtN(d) + '</span>')) + '</td>' : '') + '</tr>';
+    }).join('') +
+    '<tr class="tot"><td class="c">' + esc(t('g_total')) + '</td><td></td>' + sizes.map(p => '<td class="cell">' + fmtN(sum((s.colors || []).map(c => cell(c, p)))) + '</td>').join('') +
+    '<td class="cell">' + fmtN(sum((s.colors || []).flatMap(c => sizes.map(p => cell(c, p))))) + '</td>' + (prevH ? '<td></td>' : '') + '</tr>' +
+    '</tbody></table></div><div class="legend"><span>' + esc(t('lg_units')) + ' <span class="ramp"></span> ' + esc(t('lg_more')) + '</span><span style="color:var(--bad)">' + esc(t('lg_zero')) + '</span><span>' + esc(t('lg_dot')) + '</span><span>' + esc(t('lg_sort')) + '</span></div></section>';
+
+  // size curves
+  const curInv = {}; sizes.forEach(p => { curInv[p] = sum((s.colors || []).map(c => cell(c, p))); });
+  const curTot = sum(Object.values(curInv));
+  let soldBy = null;
+  if (hist.length >= 2) {
+    soldBy = {};
+    for (let i = 1; i < hist.length; i++) {
+      const a = hist[i - 1], b = hist[i];
+      Object.keys(b.c).forEach(id => { const x = a.c[id], y = b.c[id]; if (!x) return;
+        const col = (s.colors || []).find(c => c.id === id) || { skus: [] };
+        Object.keys(x.s).forEach(lbl => { const dd = (x.s[lbl] || 0) - (y.s[lbl] || 0); if (dd <= 0) return;
+          const sk = col.skus.find(k => k.label === lbl); const p = sk ? (sk.p || sk.label) : lbl.split(' X ')[0];
+          if (state.sec === 'all' || (sk && sk.s === state.sec)) soldBy[p] = (soldBy[p] || 0) + dd; }); });
+    }
+  }
+  const soldTot = soldBy ? sum(Object.values(soldBy)) : 0;
+  const curveRows = (obj, tot, cls) => sizes.map(p => { const v = obj[p] || 0, pct = tot ? v / tot * 100 : 0;
+    return '<div class="crow"><span class="k">' + esc(p) + '</span><span class="bar"><i class="' + cls + '" style="width:' + pct.toFixed(1) + '%"></i></span><span class="n">' + pct.toFixed(1) + '% · ' + fmtN(v) + '</span></div>'; }).join('');
+  h += '<section><div class="two"><div style="display:flex;flex-direction:column;gap:10px;min-width:0"><h3 style="font-size:17px">' + esc(t('c_inv')) + '</h3><div class="curve">' + curveRows(curInv, curTot, '') + '</div></div>' +
+    '<div style="display:flex;flex-direction:column;gap:10px;min-width:0"><h3 style="font-size:17px">' + esc(t('c_sold')) + '</h3>' +
+    (soldBy && soldTot ? '<div class="curve">' + curveRows(soldBy, soldTot, 'sold') + '</div><p class="note" style="margin:0">' + esc(t('c_note')) + '</p>' : '<p class="note" style="margin:0">' + esc(t('c_wait')) + '</p>') + '</div></div></section>';
+
+  // history
+  h += '<section><div class="sechead"><h3>' + esc(t('h_title')) + '</h3><span class="note">' + (hist.length ? esc(first.date) + ' ~ ' + esc(last.date) : '') + '</span></div>' +
+    (hist.length >= 2 ? '<div class="chart">' + chart(hist) + '</div>' : '') + '<div class="log">' + logHtml(hist) + '</div></section>';
+  h += styleWeeklyHtml(s);
+
+  // spec
+  const codes = (s.colors || []).map(c => '<span>' + esc(c.storeItem) + ' · ' + esc(String(c.webItem || '').split('/').pop()) + ' · ' + esc(c.color) + '</span>').join('');
+  h += '<section><h3 style="font-size:17px">' + esc(t('sp')) + '</h3><dl class="spec">' +
+    (s.fabric ? '<dt>' + esc(t('sp_fab')) + '</dt><dd>' + esc(s.fabric) + '</dd>' : '') +
+    (s.care && s.care.length ? '<dt>' + esc(t('sp_care')) + '</dt><dd>' + esc(s.care.join(' · ')) + '</dd>' : '') +
+    (s.longDesc ? '<dt>' + esc(t('sp_desc')) + '</dt><dd>' + esc(s.longDesc) + '</dd>' : '') +
+    '<dt>' + esc(t('sp_dept')) + '</dt><dd>' + esc(s.department) + (s.gender ? ' (' + esc(s.gender) + ')' : '') + '</dd>' +
+    '<dt>' + esc(t('sp_coll')) + '</dt><dd class="mono">' + esc(s.collectionId) + '</dd>' +
+    (s.reviews ? '<dt>' + esc(t('sp_rev')) + '</dt><dd>' + esc(t('sp_rev_v', s.rating, s.reviews)) + '</dd>' : '') +
+    '<dt>' + esc(t('sp_codes')) + '</dt><dd><div class="codes"><span style="color:var(--muted)">' + esc(t('sp_codes_h')) + '</span>' + codes + '</div></dd>' +
+    '<dt>' + esc(t('sp_first')) + '</dt><dd class="mono">' + esc(fmtTime(s.firstSeen)) + '</dd></dl></section>';
+  el.innerHTML = h;
+}
+function logHtml(hist){
+  if (!hist.length) return '<p class="note" style="margin:0">' + esc(t('h_loading')) + '</p>';
+  const rows = [];
+  for (let i = hist.length - 1; i >= 1; i--) {
+    const d = diffHist(hist[i - 1], hist[i]), du = hist[i].units - hist[i - 1].units;
+    const parts = ['<span class="mono">' + esc(t('units_n', hist[i].units)) + ' <span class="delta ' + (du < 0 ? 'dn' : du > 0 ? 'up' : '') + '">(' + (du > 0 ? '+' : '') + fmtN(du) + ')</span></span>'];
+    if (d.sold) parts.push('<span>' + esc(t('h_sold')) + ' ' + fmtN(d.sold) + '</span>');
+    if (d.recv) parts.push('<span>' + esc(t('h_recv')) + ' +' + fmtN(d.recv) + '</span>');
+    d.ev.forEach(e => parts.push('<span class="k-' + e.k + '">' + esc(e.t) + '</span>'));
+    rows.push('<div class="ev"><span class="d">' + esc(hist[i].date) + '</span><span class="e">' + parts.join('') + '</span></div>');
+  }
+  rows.push('<div class="ev"><span class="d">' + esc(hist[0].date) + '</span><span class="e"><span class="mono">' + esc(t('units_n', hist[0].units)) + '</span><span>' + esc(t('h_first')) + ' · ' + esc(t('colors_n', Object.keys(hist[0].c).length)) + '</span></span></div>');
+  return rows.join('');
+}
+function chart(hist){
+  const W = 720, H = 180, L = 56, R = 56, T = 14, B = 26;
+  const xs = hist.map(h => new Date(h.date).getTime()), x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const us = hist.map(h => h.units), uMax = (Math.max(...us) * 1.08) || 1;
+  const ps = hist.map(h => { const o = Object.values(h.c).map(c => c.o).filter(v => v != null); return o.length ? Math.min(...o) : null; });
+  const pv = ps.filter(v => v != null), pMax = pv.length ? Math.max(...pv) * 1.1 : 1;
+  const X = v => L + (x1 === x0 ? (W - L - R) / 2 : (v - x0) / (x1 - x0) * (W - L - R));
+  const Y = u => T + (1 - u / uMax) * (H - T - B);
+  const YP = p => T + (1 - p / pMax) * (H - T - B);
+  let g = [0, .5, 1].map(f => Math.round(uMax * f)).map(v => '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="var(--line)" stroke-width="1"/><text class="axis" x="' + (L - 6) + '" y="' + (Y(v) + 3) + '" text-anchor="end">' + fmtN(v) + '</text>').join('');
+  const line = hist.map((h, i) => (i ? 'L' : 'M') + X(xs[i]).toFixed(1) + ' ' + Y(h.units).toFixed(1)).join(' ');
+  g += '<path d="' + line + ' L' + X(xs[xs.length - 1]).toFixed(1) + ' ' + Y(0) + ' L' + X(xs[0]).toFixed(1) + ' ' + Y(0) + ' Z" fill="var(--accent)" fill-opacity=".10"/><path d="' + line + '" fill="none" stroke="var(--accent)" stroke-width="2"/>';
+  if (pv.length) g += '<path d="' + hist.map((h, i) => ps[i] == null ? '' : ((i && ps[i - 1] != null) ? 'L' : 'M') + X(xs[i]).toFixed(1) + ' ' + YP(ps[i]).toFixed(1)).join(' ') + '" fill="none" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="4 3"/>';
+  const li = hist.length - 1;
+  g += '<circle cx="' + X(xs[li]) + '" cy="' + Y(us[li]) + '" r="4" fill="var(--accent)"/>';
+  if (ps[li] != null) g += '<text class="axis" x="' + (W - R + 6) + '" y="' + (YP(ps[li]) + 3) + '" style="fill:var(--bad)">' + fmt$(ps[li]) + '</text>';
+  g += '<text class="axis" x="' + L + '" y="' + (H - 8) + '">' + esc(hist[0].date) + '</text><text class="axis" x="' + (W - R) + '" y="' + (H - 8) + '" text-anchor="end">' + esc(hist[li].date) + '</text>';
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(t('ch_aria')) + '">' + g + '</svg><div class="legend"><span><span style="display:inline-block;width:14px;height:2px;background:var(--accent);vertical-align:middle"></span> ' + esc(t('ch_units')) + '</span><span><span style="display:inline-block;width:14px;border-top:2px dashed var(--bad);vertical-align:middle"></span> ' + esc(t('ch_price')) + '</span></div>';
+}
+
+/* ---------- weekly ---------- */
+const canon = v => v && typeof v === 'object' ? '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}' : JSON.stringify(v);
+const fnv = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h; };
+const histOk = h => !!(h && h.c && (h.ck == null || fnv(canon(h.c)) === h.ck));
+const minOffer = h => { const o = Object.values(h.c || {}).map(c => c.o).filter(v => v != null); return o.length ? Math.min(...o) : null; };
+const dayDiff = (a, b) => Math.max(1, Math.round((new Date(b) - new Date(a)) / 864e5));
+function weekStart(ds){ const d = new Date(ds + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); }
+function addDays(ds, n){ const d = new Date(ds + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+function todayStr(){ return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date()); }
+const md = ds => ds.slice(5).replace('-', '/');
+const tsOf = s => state.daily[s.key] || {};
+function weeklyOf(s){
+  const ts = tsOf(s), w = {};
+  Object.keys(ts).sort().forEach(dt => {
+    const e = ts[dt], k = weekStart(dt);
+    const o = w[k] || (w[k] = { s: 0, r: 0, v: 0, u: null, n: 0, firsts: 0 });
+    o.s += e.s || 0; o.r += e.r || 0; o.v += e.v || 0; o.u = e.u; o.n++; if (e.first) o.firsts++;
+  });
+  Object.values(w).forEach(o => { o.onlyFirst = o.n === o.firsts; });
+  return w;
+}
+function styleWeeklyHtml(s){
+  const wk = weeklyOf(s), cur = weekStart(todayStr());
+  const keys = Object.keys(wk).sort().reverse().slice(0, 8);
+  let h = '<section><div class="sechead"><h3>' + esc(t('w_style_wk')) + '</h3></div>';
+  if (!keys.length) return h + '<p class="wnote">' + esc(t('w_empty_row')) + '</p></section>';
+  h += '<div class="gridwrap"><table class="inv"><thead><tr><th class="c">' + esc(t('w_week')) + '</th><th>' + esc(t('w_units')) + '</th><th>' + esc(t('w_rev')) + '</th><th>' + esc(t('w_recv')) + '</th><th>' + esc(t('w_end')) + '</th><th>ST</th></tr></thead><tbody>' +
+    keys.map(k => { const w = wk[k]; const st = !w.onlyFirst && w.u != null && (w.s + w.u) ? (Math.round(w.s / (w.s + w.u) * 1000) / 10) + '%' : '–';
+      return '<tr><td class="c mono">' + esc(k) + (k === cur ? ' <span class="tag">' + esc(t('w_open')) + '</span>' : '') + (w.onlyFirst ? ' <span class="tag">' + esc(t('w_start')) + '</span>' : '') + '</td>' +
+        '<td class="cell"><b>' + (w.onlyFirst ? '–' : fmtN(w.s)) + '</b></td><td class="cell">' + (w.onlyFirst ? '–' : fmt$(Math.round(w.v))) + '</td><td class="cell">' + (w.onlyFirst ? '–' : fmtN(w.r)) + '</td><td class="cell">' + fmtN(w.u) + '</td><td class="cell">' + st + '</td></tr>'; }).join('') +
+    '</tbody></table></div></section>';
+  return h;
+}
+function weeklyModel(){
+  const styles = state.styles.filter(s => state.brand === 'all' || s.bs === state.brand);
+  const cur = weekStart(todayStr());
+  let weeks = []; for (let i = 7; i >= 0; i--) weeks.push(addDays(cur, -7 * i));
+  const W = {}; styles.forEach(s => { W[s.key] = weeklyOf(s); });
+  const firstWk = Object.values(W).flatMap(w => Object.keys(w)).sort()[0];
+  if (firstWk) { const keep = weeks.filter(w => w >= firstWk); weeks = keep.length >= 4 ? keep : weeks.slice(-4); }
+  const cell = (s, wk) => W[s.key][wk];
+  const tot = (list, wk, f) => sum(list.map(s => { const c = cell(s, wk); return c && !c.onlyFirst ? c[f] : 0; }));
+  const sea = styles.filter(s => s.seaa), oth = styles.filter(s => !s.seaa);
+  const has = styles.some(s => Object.values(W[s.key]).some(w => !w.onlyFirst));
+  return { styles, cur, weeks, W, cell, tot, sea, oth, has };
+}
+function renderWeekly(){
+  const el = $('#weekly'), M = weeklyModel();
+  const { weeks, cur, sea, oth, tot, cell } = M;
+  const lastWk = addDays(cur, -7), prevWk = addDays(cur, -14);
+  const pct = (a, b) => b ? Math.round((a - b) / b * 100) : null;
+  const seaL = tot(sea, lastWk, 's'), othL = tot(oth, lastWk, 's');
+  const brandSeg = '<div class="seg" role="group" aria-label="Brand">' + [['all', t('f_all')], ['anf', 'A&F'], ['hol', 'Hollister']].map(([k, l]) => '<button type="button" data-wbrand="' + k + '" aria-pressed="' + (state.brand === k) + '">' + esc(l) + '</button>').join('') + '</div>';
+  let h = '<section><div class="shead"><div style="display:flex;flex-direction:column;gap:6px;min-width:0"><h2>' + esc(t('w_title')) + '</h2><p class="wnote">' + esc(t('w_sub')) + '</p></div>' +
+    '<div class="actions">' + brandSeg + '<button type="button" class="btn small" id="wcsv">' + esc(t('w_csv')) + '</button></div></div>';
+  if (state.badHist) h += '<div class="msg info">' + esc(t('w_bad', state.badHist)) + '</div>';
+  if (!M.has) {
+    el.innerHTML = h + '<div class="empty"><b>' + esc(t('w_none_t')) + '</b><span>' + esc(t('w_none_s')) + '</span></div></section>' + weeklyTable(M);
+    return;
+  }
+  const wow = (a, b) => { const p = pct(a, b); return p == null ? '' : t('w_wow', p); };
+  h += '<div class="kpis">' +
+    kpi(t('w_sea_units') + ' · ' + t('w_lastwk'), fmtN(seaL), fmt$(Math.round(tot(sea, lastWk, 'v'))) + (wow(seaL, tot(sea, prevWk, 's')) ? ' · ' + wow(seaL, tot(sea, prevWk, 's')) : '')) +
+    kpi(t('w_oth_units') + ' · ' + t('w_lastwk'), fmtN(othL), fmt$(Math.round(tot(oth, lastWk, 'v'))) + (wow(othL, tot(oth, prevWk, 's')) ? ' · ' + wow(othL, tot(oth, prevWk, 's')) : '')) +
+    kpi(t('w_sea_units') + ' · ' + t('w_thiswk'), fmtN(tot(sea, cur, 's')), fmt$(Math.round(tot(sea, cur, 'v')))) +
+    kpi(t('w_share'), (seaL + othL) ? Math.round(seaL / (seaL + othL) * 100) + '%' : '–', t('w_share_sub')) +
+    '</div>';
+  if (!sea.length) h += '<p class="wnote">' + esc(t('w_nomark')) + '</p>';
+  h += '<div class="chart">' + weeklyChart(M) + '</div></section>';
+  el.innerHTML = h + weeklyTable(M);
+}
+function weeklyTable(M){
+  const { weeks, cur, sea, oth, tot, cell } = M;
+  const lastWk = addDays(cur, -7);
+  const head = '<tr><th class="c">' + esc(t('w_style')) + '</th>' + weeks.map(w => '<th>' + esc(md(w)) + (w === cur ? '<br><span style="font-weight:400">' + esc(t('w_open')) + '</span>' : '') + '</th>').join('') + '<th>' + esc(t('w_stock')) + '</th><th>' + esc(t('w_st')) + '</th></tr>';
+  let max = 1; M.styles.forEach(s => weeks.forEach(w => { const c = cell(s, w); if (c && !c.onlyFirst) max = Math.max(max, c.s); }));
+  const row = s => {
+    const lw = cell(s, lastWk); const st = lw && !lw.onlyFirst && lw.u != null && (lw.s + lw.u) ? (Math.round(lw.s / (lw.s + lw.u) * 1000) / 10) + '%' : '–';
+    return '<tr><td class="c"><button type="button" class="linkbtn" data-open="' + esc(s.key) + '"><span class="tag ' + esc(s.bs) + '">' + esc(BRAND[s.bs] || s.bs) + '</span> ' + esc(s.name) + '</button></td>' +
+      weeks.map(w => { const c = cell(s, w);
+        if (!c) return '<td class="cell" style="color:var(--muted)">·</td>';
+        if (c.onlyFirst) return '<td class="cell" style="color:var(--muted)">' + esc(t('w_start')) + '</td>';
+        const p = Math.round(c.s / max * 60);
+        return '<td class="cell" style="background:color-mix(in srgb, var(--accent) ' + p + '%, var(--surface));' + (p > 38 ? 'color:var(--accent-ink)' : '') + '">' + fmtN(c.s) + '<small' + (p > 38 ? ' style="color:inherit;opacity:.8"' : '') + '>' + fmt$(Math.round(c.v)) + '</small></td>'; }).join('') +
+      '<td class="cell">' + fmtN(s.units) + '</td><td class="cell">' + st + '</td></tr>';
+  };
+  const group = (label, list) => !list.length ? '' :
+    '<tr class="grp"><td colspan="' + (weeks.length + 3) + '">' + esc(label) + ' · ' + list.length + '</td></tr>' +
+    list.slice().sort((a, b) => ((cell(b, lastWk) || {}).s || 0) - ((cell(a, lastWk) || {}).s || 0)).map(row).join('') +
+    '<tr class="sub"><td class="c">' + esc(t('w_sub_total')) + '</td>' + weeks.map(w => list.some(s => { const c = cell(s, w); return c && !c.onlyFirst; }) ? '<td class="cell">' + fmtN(tot(list, w, 's')) + '<small>' + fmt$(Math.round(tot(list, w, 'v'))) + '</small></td>' : '<td class="cell" style="color:var(--muted)">·</td>').join('') + '<td class="cell">' + fmtN(sum(list.map(s => s.units))) + '</td><td></td></tr>';
+  return '<section><div class="gridwrap"><table class="inv"><thead>' + head + '</thead><tbody>' + group(t('w_grp_sea'), sea) + group(t('w_grp_oth'), oth) + '</tbody></table></div></section>';
+}
+function weeklyChart(M){
+  const { weeks, sea, oth, tot, cur } = M;
+  const W = 720, H = 190, L = 50, R = 12, T = 12, B = 30;
+  const a = weeks.map(w => tot(sea, w, 's')), b = weeks.map(w => tot(oth, w, 's'));
+  const mx = Math.max(1, ...a, ...b) * 1.1;
+  const bw = (W - L - R) / weeks.length, gw = Math.min(18, bw / 3);
+  const Y = v => T + (1 - v / mx) * (H - T - B);
+  let g = [0, .5, 1].map(f => Math.round(mx * f)).map(v => '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="var(--line)"/><text class="axis" x="' + (L - 6) + '" y="' + (Y(v) + 3) + '" text-anchor="end">' + fmtN(v) + '</text>').join('');
+  weeks.forEach((w, i) => {
+    const cx = L + bw * i + bw / 2, op = w === cur ? ' fill-opacity=".45"' : '';
+    g += '<rect x="' + (cx - gw - 1) + '" y="' + Y(a[i]) + '" width="' + gw + '" height="' + Math.max(0, Y(0) - Y(a[i])) + '" fill="var(--accent)" rx="2"' + op + '/>';
+    g += '<rect x="' + (cx + 1) + '" y="' + Y(b[i]) + '" width="' + gw + '" height="' + Math.max(0, Y(0) - Y(b[i])) + '" fill="var(--muted)" rx="2"' + op + '/>';
+    g += '<text class="axis" x="' + cx + '" y="' + (H - 10) + '" text-anchor="middle">' + esc(md(w)) + '</text>';
+  });
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(t('w_chart_aria')) + '">' + g + '</svg><div class="legend"><span><span style="display:inline-block;width:10px;height:10px;background:var(--accent);border-radius:2px;vertical-align:middle"></span> ' + esc(t('g_sea')) + '</span><span><span style="display:inline-block;width:10px;height:10px;background:var(--muted);border-radius:2px;vertical-align:middle"></span> ' + esc(t('g_other')) + '</span><span>' + esc(t('w_units')) + '</span></div>';
+}
+$('#viewSeg').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (!b) return; state.view = b.dataset.view; render(); });
+$('#seaSeg').addEventListener('click', e => { const b = e.target.closest('[data-sea]'); if (!b) return; state.sea = b.dataset.sea; document.querySelectorAll('[data-sea]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); renderList(); });
+$('#weekly').addEventListener('click', async e => {
+  const ob = e.target.closest('[data-open]');
+  if (ob) { state.sel = ob.dataset.open; state.view = 'styles'; state.sec = 'all'; render(); return; }
+  const bb = e.target.closest('[data-wbrand]');
+  if (bb) { state.brand = bb.dataset.wbrand; document.querySelectorAll('#brandSeg [data-brand]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.brand === state.brand))); renderWeekly(); return; }
+  if (e.target.closest('#wcsv')) {
+    const M = weeklyModel();
+    const rows = [['group', 'brand', 'style', 'collection_id', 'week_start', 'est_units_sold', 'est_revenue_usd', 'units_received', 'end_stock']];
+    M.styles.forEach(s => M.weeks.forEach(w => { const c = M.cell(s, w); if (!c || c.onlyFirst) return; rows.push([s.seaa ? 'Sae-A' : 'Other', s.brand, s.name, s.collectionId, w, c.s, Math.round(c.v * 100) / 100, c.r, c.u]); }));
+    const csv = '﻿' + rows.map(r => r.map(v => { const x = v == null ? '' : String(v); return /[",\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; }).join(',')).join('\n');
+    downloadCsv('AF_weekly_sales_' + todayStr() + '.csv', csv);
+  }
+});
+
+/* ---------- events ---------- */
+document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => {
+  LANG = b.dataset.lang; try { localStorage.setItem('anf-lang', LANG); } catch (e) {}
+  $('#addMsg').hidden = true; applyStatic(); render();
+}));
+$('#brandSeg').addEventListener('click', e => { const b = e.target.closest('button[data-brand]'); if (!b) return; state.brand = b.dataset.brand; document.querySelectorAll('[data-brand]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); renderList(); });
+$('#q').addEventListener('input', e => { state.q = e.target.value; renderList(); });
+$('#list').addEventListener('click', e => { const b = e.target.closest('.item'); if (!b) return; state.sel = b.dataset.key; state.sec = 'all'; state.confirmDel = false; render(); if (window.matchMedia('(max-width:900px)').matches) $('#sheet').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+$('#sheet').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const s = state.styles.find(x => x.key === state.sel); if (!s) return;
+  if (b.dataset.sec) { state.sec = b.dataset.sec; renderSheet(); return; }
+  if (b.id === 'seaToggle') {
+    const j = await admin(s.seaa ? 'unmark' : 'mark', s.key);
+    if (j.ok) { s.seaa = !s.seaa; showMsg('ok', t(s.seaa ? 'm_sea_on' : 'm_sea_off', s.name)); render(); } else showMsg('err', t('m_seafail'));
+    return;
+  }
+  if (b.id === 'del') { state.confirmDel = true; renderSheet(); return; }
+  if (b.id === 'delNo') { state.confirmDel = false; renderSheet(); return; }
+  if (b.id === 'delYes') {
+    const j = await admin('delete', s.key);
+    if (j.ok) { state.styles = state.styles.filter(x => x.key !== s.key); state.sel = null; state.confirmDel = false; showMsg('ok', t('m_deleted', s.name)); render(); }
+    else showMsg('err', t('m_delfail'));
+    return;
+  }
+  if (b.id === 'reqRefresh') {
+    b.disabled = true; b.textContent = t('capturing');
+    const j = await captureUrl(s.url);
+    if (j.ok) { showMsg('ok', t('m_refreshed', j.style.name, j.hist.units)); await loadAll(); state.histKey = null; render(); }
+    else { showMsg('err', t('m_cap_err', j.error)); b.disabled = false; b.textContent = t('b_refresh'); }
+    return;
+  }
+  if (b.id === 'csv') {
+    const rows = [['brand','style','collection_id','color','color_family','store_item','size','sku','inventory','status','offer_usd','list_usd','captured_at']];
+    s.colors.forEach(c => c.skus.forEach(k => rows.push([s.brand, s.name, s.collectionId, c.color, c.family, c.storeItem, k.label || k.p, k.sku, k.inv, k.status, c.offer, c.list, s.capturedAt])));
+    const csv = '\ufeff' + rows.map(r => r.map(v => { const x = v == null ? '' : String(v); return /[",\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; }).join(',')).join('\n');
+    downloadCsv((s.brand + ' ' + s.name + ' ' + s.date).replace(/[\\/:*?"<>|&]+/g, '').replace(/\s+/g, '_') + '.csv', csv);
+  }
+});
+
+
+/* ---------- data ---------- */
+async function api(path, opts){
+  try { const r = await fetch(path, opts); return await r.json().catch(() => ({ ok: false, error: 'http_' + r.status })); }
+  catch (e) { return { ok: false, error: 'network' }; }
+}
+async function loadAll(){
+  const since = addDays(weekStart(todayStr()), -7 * 10);
+  const [a, b] = await Promise.all([api('/api/styles'), api('/api/daily?since=' + since)]);
+  state.loaded = true; state.loadedAt = Date.now();
+  if (!a.ok) { setStatus(false, 'st_off'); return false; }
+  state.styles = a.styles; state.daily = {};
+  (b.ok ? b.daily : []).forEach(d => { (state.daily[d.key] = state.daily[d.key] || {})[d.date] = d; });
+  if (state.sel && !state.styles.some(s => s.key === state.sel)) state.sel = null;
+  setStatus(true, 'st_on');
+  return true;
+}
+function loadHist(key){
+  if (state.histKey === key) return;
+  state.histKey = key; state.hist = [];
+  api('/api/history?key=' + encodeURIComponent(key)).then(j => {
+    if (state.histKey !== key) return;
+    state.hist = j.ok ? j.history : [];
+    if (state.sel === key && state.view === 'styles') renderSheet();
+  });
+}
+const captureUrl = url => api('/api/capture', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url }) });
+const admin = (action, key) => api('/api/admin', { method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-key': state.admin || '' }, body: JSON.stringify({ action, key }) });
+function downloadCsv(name, text){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' })); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function setStatus(on, key){ state.statusKey = key; $('#dot').className = 'dot ' + (on ? 'on' : 'off'); $('#statusText').textContent = t(key); }
+function applyAdmin(){ $('#adminBtn').textContent = state.admin ? t('ad_on') : t('ad_btn'); $('#adminOut').hidden = !state.admin; }
+try { state.admin = localStorage.getItem('anf-admin') || ''; } catch (e) {}
+$('#adminBtn').addEventListener('click', () => { const f = $('#adminForm'); f.hidden = !f.hidden; $('#adminMsg').textContent = ''; if (!f.hidden) $('#adminKey').focus(); });
+$('#adminOut').addEventListener('click', () => { state.admin = ''; try { localStorage.removeItem('anf-admin'); } catch (e) {} applyAdmin(); render(); });
+$('#adminForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  state.admin = $('#adminKey').value.trim();
+  const j = await admin('check');
+  if (j.ok) { try { localStorage.setItem('anf-admin', state.admin); } catch (x) {} $('#adminForm').hidden = true; $('#adminKey').value = ''; showMsg('ok', t('ad_ok')); }
+  else { state.admin = ''; $('#adminMsg').textContent = t('ad_bad'); }
+  applyAdmin(); render();
+});
+window.addEventListener('focus', () => { if (Date.now() - state.loadedAt > 60000) loadAll().then(render); });
+applyStatic(); render();
+loadAll().then(() => {
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (h && state.styles.some(s => s.key === h)) state.sel = h;
+  render();
+});
+})();
+</script>
+</body>
+</html>

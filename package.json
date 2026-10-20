@@ -1,0 +1,17 @@
+{
+  "name": "anf-style-tracker",
+  "private": true,
+  "type": "module",
+  "description": "A&F / Hollister style tracker: inventory by color and size, prices, and weekly estimated sales.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "PGLITE=1 node scripts/dev-server.js",
+    "test": "PGLITE=1 node scripts/test.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "1.1.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.10"
+  }
+}
