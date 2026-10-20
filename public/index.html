@@ -383,7 +383,7 @@ const I18N = {
   }
 };
 Object.assign(I18N.ko, {
-  hint_data: '북마클릿 데이터 붙여넣기 → 바로 저장', hint_url: '주소만 넣기 → 서버가 바로 수집해서 저장',
+  hint_data: '북마클릿 데이터 붙여넣기 → 바로 저장', hint_url: '주소만 넣기 → 서버가 수집을 시도하고, 막히면 북마클릿 안내',
   bm_2: 'abercrombie.com 또는 hollisterco.com 상품 페이지에서 그 북마크를 누르면 데이터가 트래커로 바로 저장됩니다.',
   bm_3: '서버 수집이 막히는 상품도 북마클릿으로는 저장됩니다. 붙여넣기는 필요 없습니다.',
   e_nodb_t: '불러오는 중…', e_nodb_s: '', st_wait: '연결 중…', st_on: '서버 연결됨', st_off: '서버에 연결하지 못했습니다',
@@ -391,13 +391,13 @@ Object.assign(I18N.ko, {
   b_refresh: '지금 다시 수집', capturing: '수집 중…',
   m_saved2: (nm, c, u, d) => nm + ' 저장됨 · ' + c + '컬러 · ' + fmtN(u) + '개 (' + d + ')',
   m_refreshed: (nm, u) => nm + ' 다시 수집함 · ' + fmtN(u) + '개',
-  m_cap_err: e => ({ bad_url: 'abercrombie.com 또는 hollisterco.com 상품 페이지 주소(/p/ 가 들어간 주소)를 넣어주세요.', blocked: 'A&F 사이트가 서버 접속을 막았습니다. 상품 페이지에서 북마클릿으로 저장해 주세요.', not_a_product_page: '상품 페이지를 읽지 못했습니다. 판매가 끝난 상품일 수 있습니다.', network: '서버에 연결하지 못했습니다.', checksum_mismatch: '데이터가 손상되었습니다. 북마클릿으로 다시 수집해 주세요.', not_tracker_data: 'A&F 수집 북마클릿 데이터가 아닙니다.' })[e] || ('수집하지 못했습니다 (' + e + ')'),
-  ad_btn: '관리자', ad_on: '관리자 모드', ad_ph: '관리자 비밀번호', ad_go: '확인', ad_out: '나가기', ad_ok: '관리자 모드로 전환했습니다.', ad_bad: '비밀번호가 맞지 않습니다.',
+  m_cap_err: e => ({ bad_url: 'abercrombie.com 또는 hollisterco.com 상품 페이지 주소(/p/ 가 들어간 주소)를 넣어주세요.', blocked: 'A&F가 서버의 자동 접속을 막고 있습니다. 상품 페이지를 열고 북마클릿을 누르면 바로 저장됩니다.', not_a_product_page: '상품 페이지를 읽지 못했습니다. 판매가 끝난 상품일 수 있습니다.', network: '서버에 연결하지 못했습니다.', checksum_mismatch: '데이터가 손상되었습니다. 북마클릿으로 다시 수집해 주세요.', not_tracker_data: 'A&F 수집 북마클릿 데이터가 아닙니다.' })[e] || ('수집하지 못했습니다 (' + e + ')'),
+  open_pdp: '상품 페이지 열기 ↗', ad_btn: '관리자', ad_on: '관리자 모드', ad_ph: '관리자 비밀번호', ad_go: '확인', ad_out: '나가기', ad_ok: '관리자 모드로 전환했습니다.', ad_bad: '비밀번호가 맞지 않습니다.',
   w_none_s: '매일 오전 자동으로 다시 수집해서 쌓입니다. 상품을 추가한 다음 날부터 판매 추정이 나타납니다.',
   w_nomark: '세아로 표시된 스타일이 아직 없습니다. 관리자 모드에서 상품을 열고 "세아 스타일로 표시"를 눌러주세요.'
 });
 Object.assign(I18N.en, {
-  hint_data: 'Paste bookmarklet data → saved instantly', hint_url: 'URL only → the server collects and saves it right away',
+  hint_data: 'Paste bookmarklet data → saved instantly', hint_url: 'URL only → the server tries to collect it and points you to the bookmarklet if blocked',
   bm_2: 'On an abercrombie.com or hollisterco.com product page, click that bookmark. The data is saved to the tracker directly.',
   bm_3: 'Styles the server cannot reach can still be saved this way. No pasting needed.',
   e_nodb_t: 'Loading…', e_nodb_s: '', st_wait: 'Connecting…', st_on: 'Server connected', st_off: 'Could not reach the server',
@@ -405,8 +405,8 @@ Object.assign(I18N.en, {
   b_refresh: 'Capture again now', capturing: 'Capturing…',
   m_saved2: (nm, c, u, d) => nm + ' saved · ' + c + ' colors · ' + fmtN(u) + ' units (' + d + ')',
   m_refreshed: (nm, u) => nm + ' captured again · ' + fmtN(u) + ' units',
-  m_cap_err: e => ({ bad_url: 'Enter an abercrombie.com or hollisterco.com product page URL (one that contains /p/).', blocked: 'The A&F site blocked the server. Save this style with the bookmarklet from its product page.', not_a_product_page: 'Could not read a product page. The style may no longer be sold.', network: 'Could not reach the server.', checksum_mismatch: 'The data was damaged. Capture it again with the bookmarklet.', not_tracker_data: 'This is not data from the A&F Capture bookmarklet.' })[e] || ('Could not capture (' + e + ')'),
-  ad_btn: 'Admin', ad_on: 'Admin mode', ad_ph: 'Admin password', ad_go: 'Enter', ad_out: 'Exit', ad_ok: 'Admin mode on.', ad_bad: 'That password is not right.',
+  m_cap_err: e => ({ bad_url: 'Enter an abercrombie.com or hollisterco.com product page URL (one that contains /p/).', blocked: 'A&F is blocking automated access from the server. Open the product page and click the bookmarklet to save it.', not_a_product_page: 'Could not read a product page. The style may no longer be sold.', network: 'Could not reach the server.', checksum_mismatch: 'The data was damaged. Capture it again with the bookmarklet.', not_tracker_data: 'This is not data from the A&F Capture bookmarklet.' })[e] || ('Could not capture (' + e + ')'),
+  open_pdp: 'Open product page ↗', ad_btn: 'Admin', ad_on: 'Admin mode', ad_ph: 'Admin password', ad_go: 'Enter', ad_out: 'Exit', ad_ok: 'Admin mode on.', ad_bad: 'That password is not right.',
   w_none_s: 'Styles are captured again automatically every morning. Estimated sales appear from the day after a style is added.',
   w_nomark: 'No styles are marked as Sae-A yet. In admin mode, open a style and click "Mark as Sae-A style".'
 });
@@ -505,7 +505,16 @@ $('#addForm').addEventListener('submit', async e => {
       showMsg('info', t('capturing'));
       j = await captureUrl(raw);
     }
-    if (!j.ok) { showMsg('err', t('m_cap_err', j.error)); return; }
+    if (!j.ok) {
+      showMsg('err', t('m_cap_err', j.error));
+      if (j.error === 'blocked' && j.url) {
+        const a = document.createElement('a'); a.href = j.url; a.target = '_blank'; a.rel = 'noopener';
+        a.textContent = ' ' + t('open_pdp'); a.style.cssText = 'font-weight:700;color:inherit;margin-left:6px';
+        $('#addMsg').appendChild(a);
+        if (!localStorage.getItem('anf-bm-seen')) { $('#bmPanel').hidden = false; $('#bmToggle').setAttribute('aria-expanded', 'true'); }
+      }
+      return;
+    }
     const key = j.key || (j.style && j.style.key);
     const nm = j.name || (j.style && j.style.name), cols = j.colors || (j.style && j.style.colors.length), units = j.units != null ? j.units : (j.hist && j.hist.units), date = j.date || (j.hist && j.hist.date);
     showMsg('ok', t('m_saved2', nm, cols, units, date));
