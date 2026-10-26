@@ -192,6 +192,19 @@ table.inv tr.sub td{font-weight:700;border-bottom:2px solid var(--line)}
 #weekly .chart{max-width:900px} .k-new{color:var(--good);font-weight:600} .k-out{color:var(--warn);font-weight:600}
 
 /* spec */
+.rvbadge{font-size:11px;font-weight:700;color:#B07D00}
+.rvtop{display:grid;grid-template-columns:minmax(140px,200px) minmax(0,1fr);gap:16px;align-items:center}
+@media (max-width:560px){.rvtop{grid-template-columns:minmax(0,1fr)}}
+.rvavg{display:flex;flex-direction:column;gap:2px}
+.rvavg b{font-family:var(--f-mono);font-size:30px;line-height:1.1}
+.stars{color:#E0A100;letter-spacing:1px;font-size:14px}.stars i{font-style:normal;color:var(--line)}
+.rvtags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.rvtag{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer}
+.rvtag[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.rvlist{display:flex;flex-direction:column;gap:8px}
+.rv{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.rv p{margin:0;font-size:13px;overflow-wrap:anywhere}
+.rvh{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rvh b{font-size:13px}
 .spec{display:grid;grid-template-columns:120px minmax(0,1fr);gap:6px 14px;font-size:13px;margin:0}
 .spec dt{color:var(--muted)} .spec dd{margin:0;overflow-wrap:anywhere}
 .codes{display:flex;flex-direction:column;gap:2px;font-family:var(--f-mono);font-size:12px}
@@ -393,6 +406,12 @@ const I18N = {
   }
 };
 Object.assign(I18N.ko, {
+  rv_title: '고객 리뷰', rv_asof: d => d + ' 수집 기준', rv_counts: (c, n) => '사이트 리뷰 ' + fmtN(c) + '개 · 저장 ' + fmtN(n) + '개',
+  rv_none: '아직 저장된 리뷰가 없습니다. 리뷰는 A&F가 미국 스토어에서만 보여 줍니다. 미국 스토어(회사 VPN)로 상품 페이지를 연 상태에서 북마클릿을 누르면 리뷰도 함께 저장됩니다. 화면에 보이는 리뷰만 저장되니, "더 보기"로 리뷰를 펼친 뒤 누르면 더 많이 쌓입니다.',
+  rv_last: (d, st) => '마지막 수집 ' + d + ' · 스토어 ' + st + (st === 'us' ? '' : ' (리뷰 없음)'),
+  rv_fit: '사이트 핏 의견', rv_tags: '리뷰에서 자주 나온 말', rv_more: n => n + '개 더 보기',
+  rv_t_small: '작게 나옴', rv_t_large: '크게 나옴', rv_t_tts: '정사이즈', rv_t_sheer: '비침', rv_t_soft: '부드러움', rv_t_thin: '얇음',
+  rv_t_shrink: '수축', rv_t_pill: '보풀', rv_t_short: '짧음', rv_t_long: '김', rv_t_comfy: '편안함', rv_t_quality: '품질 언급',
   th_light: '☀ 라이트', th_dark: '☾ 다크', th_aria: '화면 모드',
   bm_guide: '그림으로 보는 설치·사용법 ↗',
   hint_data: '북마클릿 데이터 붙여넣기 → 바로 저장', hint_url: '주소만 넣기 → 서버가 수집을 시도하고, 막히면 북마클릿 안내',
@@ -409,6 +428,12 @@ Object.assign(I18N.ko, {
   w_nomark: '세아로 표시된 스타일이 아직 없습니다. 상품을 열고 "세아 스타일로 표시"를 눌러주세요.'
 });
 Object.assign(I18N.en, {
+  rv_title: 'Customer reviews', rv_asof: d => 'As of ' + d, rv_counts: (c, n) => fmtN(c) + ' on site · ' + fmtN(n) + ' saved',
+  rv_none: 'No reviews saved yet. A&F only shows reviews on its US store. Open the product page on the US store (company VPN) and click the bookmarklet to save the reviews too. Only reviews shown on screen are saved, so expand them with "Load more" first to save more.',
+  rv_last: (d, st) => 'Last capture ' + d + ' · store ' + st + (st === 'us' ? '' : ' (no reviews)'),
+  rv_fit: 'Site fit summary', rv_tags: 'Common words in reviews', rv_more: n => 'Show ' + n + ' more',
+  rv_t_small: 'Runs small', rv_t_large: 'Runs large', rv_t_tts: 'True to size', rv_t_sheer: 'See-through', rv_t_soft: 'Soft', rv_t_thin: 'Thin',
+  rv_t_shrink: 'Shrinks', rv_t_pill: 'Pilling', rv_t_short: 'Short', rv_t_long: 'Long', rv_t_comfy: 'Comfortable', rv_t_quality: 'Mentions quality',
   th_light: '☀ Light', th_dark: '☾ Dark', th_aria: 'Color mode',
   bm_guide: 'Illustrated guide (Korean) ↗',
   hint_data: 'Paste bookmarklet data → saved instantly', hint_url: 'URL only → the server tries to collect it and points you to the bookmarklet if blocked',
@@ -455,7 +480,7 @@ const cmpP = (a, b) => { const x = rankP(a), y = rankP(b); return x[0] - y[0] ||
 const cmpS = (a, b) => { const i = SEC_ORDER.indexOf(a), j = SEC_ORDER.indexOf(b); return (i < 0 ? 99 : i) - (j < 0 ? 99 : j) || String(a).localeCompare(String(b)); };
 
 
-const state = { styles: [], daily: {}, sel: null, brand: 'all', q: '', sec: 'all', hist: [], histKey: null, confirmDel: false, statusKey: 'st_wait', view: 'styles', sea: 'all', badHist: 0, loaded: false, loadedAt: 0, admin: '' };
+const state = { styles: [], daily: {}, sel: null, brand: 'all', q: '', sec: 'all', hist: [], histKey: null, confirmDel: false, statusKey: 'st_wait', view: 'styles', sea: 'all', badHist: 0, loaded: false, loadedAt: 0, admin: '', rv: null, rvKey: null, rvTag: null, rvAll: false };
 
 /* ---------- bookmarklet (public/bm.js) ---------- */
 function buildBM(){ return window.anfBookmarklet(LANG); }
@@ -505,7 +530,7 @@ $('#addForm').addEventListener('submit', async e => {
     const nm = j.name || (j.style && j.style.name), cols = j.colors || (j.style && j.style.colors.length), units = j.units != null ? j.units : (j.hist && j.hist.units), date = j.date || (j.hist && j.hist.date);
     showMsg('ok', t('m_saved2', nm, cols, units, date));
     $('#addInput').value = ''; pasted = null;
-    await loadAll(); state.sel = key; state.histKey = null; state.view = 'styles'; render();
+    await loadAll(); state.sel = key; state.histKey = null; state.rvKey = null; state.view = 'styles'; render();
   } finally { btn.disabled = false; btn.textContent = t('add_btn'); }
 });
 
@@ -568,7 +593,7 @@ function renderList(){
       photo({ thumb: heroUrl(s, 120), color: s.name, family: lead && lead.family }) +
       '<span class="nm">' + esc(s.name) + '</span>' +
       '<span class="px num">' + px + (st.mdColors ? '<br><span style="color:var(--bad);font-size:11px">−' + Math.round(st.deepest * 100) + '%</span>' : '') + '</span>' +
-      '<span class="sub"><span class="tag ' + esc(s.bs) + '">' + esc(BRAND[s.bs] || s.bs) + '</span>' + (s.seaa ? '<span class="tag sea">SAE-A</span>' : '') + '<span>' + esc(s.category || s.department) + '</span>' +
+      '<span class="sub"><span class="tag ' + esc(s.bs) + '">' + esc(BRAND[s.bs] || s.bs) + '</span>' + (s.seaa ? '<span class="tag sea">SAE-A</span>' : '') + (s.rv && (s.rv.saved || s.rv.count) ? '<span class="rvbadge">★ ' + (s.rv.rating != null ? Number(s.rv.rating).toFixed(1) + ' · ' : '') + fmtN(s.rv.count || s.rv.saved) + '</span>' : '') + '<span>' + esc(s.category || s.department) + '</span>' +
       '<span class="num">' + esc(t('colors_n', st.colors)) + ' · ' + esc(t('units_n', st.units)) + '</span>' +
       (st.out ? '<span class="num" style="color:var(--warn)">' + esc(t('out_n', st.out)) + '</span>' : '') +
       '<span class="num">' + esc(s.date || '') + '</span></span></button>';
@@ -580,7 +605,7 @@ function renderSheet(){
   const s = state.styles.find(x => x.key === state.sel) || filtered()[0];
   if (!s) { el.innerHTML = '<section><div class="label">' + esc(t('sp')) + '</div><h2 style="font-size:22px">' + esc(t('sh_t')) + '</h2><p class="note" style="max-width:62ch;margin:0">' + esc(t('sh_s')) + '</p></section>'; return; }
   if (s.key !== state.sel) state.sel = s.key;
-  loadHist(s.key);
+  loadHist(s.key); loadReviews(s.key);
   const st = stats(s), hist = state.hist.filter(h => h.key === s.key);
   const first = hist[0], last = hist[hist.length - 1];
   let period = null;
@@ -670,6 +695,8 @@ function renderSheet(){
     (hist.length >= 2 ? '<div class="chart">' + chart(hist) + '</div>' : '') + '<div class="log">' + logHtml(hist) + '</div></section>';
   h += styleWeeklyHtml(s);
 
+  h += reviewsHtml(s);
+
   // spec
   const codes = (s.colors || []).map(c => '<span>' + esc(c.storeItem) + ' · ' + esc(String(c.webItem || '').split('/').pop()) + ' · ' + esc(c.color) + '</span>').join('');
   h += '<section><h3 style="font-size:17px">' + esc(t('sp')) + '</h3><dl class="spec">' +
@@ -682,6 +709,62 @@ function renderSheet(){
     '<dt>' + esc(t('sp_codes')) + '</dt><dd><div class="codes"><span style="color:var(--muted)">' + esc(t('sp_codes_h')) + '</span>' + codes + '</div></dd>' +
     '<dt>' + esc(t('sp_first')) + '</dt><dd class="mono">' + esc(fmtTime(s.firstSeen)) + '</dd></dl></section>';
   el.innerHTML = h;
+}
+// Fit and quality words customers use, counted across saved reviews.
+const RV_TAGS = [
+  ['rv_t_small', /runs? small|too small|too tight|size(d)? up|order(ed)? a size up|smaller than/i],
+  ['rv_t_large', /runs? (big|large)|too (big|large|loose|baggy)|size(d)? down|bigger than|larger than/i],
+  ['rv_t_tts', /true to size|\btts\b|fits? (perfect|great|well)|perfect fit/i],
+  ['rv_t_sheer', /see[- ]?through|sheer|transparent/i],
+  ['rv_t_soft', /\bsoft/i],
+  ['rv_t_thin', /\bthin\b|flimsy/i],
+  ['rv_t_shrink', /shr[ui]nk/i],
+  ['rv_t_pill', /\bpill(s|ing|ed)?\b/i],
+  ['rv_t_short', /too short|\bcropped|shorter than/i],
+  ['rv_t_long', /too long|longer than/i],
+  ['rv_t_comfy', /comfortable|\bcomfy/i],
+  ['rv_t_quality', /quality/i]
+];
+const stars = r => r == null ? '' : '<span class="stars" aria-label="' + esc(String(r)) + ' / 5">' + '★★★★★'.slice(0, Math.round(r)) + '<i>' + '★★★★★'.slice(Math.round(r)) + '</i></span>';
+function reviewsHtml(s){
+  const rv = state.rv;
+  let h = '<section id="rvSec"><div class="sechead"><h3>' + esc(t('rv_title')) + '</h3>';
+  if (!rv) return h + '</div><p class="note" style="margin:0">' + esc(t('h_loading')) + '</p></section>';
+  const m = rv.meta || {}, items = rv.items || [];
+  h += '<span class="note">' + (m.date ? esc(t('rv_asof', m.date)) : '') + '</span></div>';
+  if (!items.length && !m.count) {
+    return h + '<p class="note" style="margin:0;max-width:72ch">' + esc(t('rv_none')) + '</p>' + (rv.diag && rv.diag.store ? '<p class="note" style="margin:0">' + esc(t('rv_last', rv.diag.date || '', rv.diag.store)) + '</p>' : '') + '</section>';
+  }
+  const rated = items.filter(r => r.rating != null);
+  const avg = m.rating != null ? Number(m.rating) : (rated.length ? rated.reduce((a, r) => a + r.rating, 0) / rated.length : null);
+  let dist = (m.dist || []).map(d => ({ r: Number(d.r), n: Number(d.n) }));
+  if (!dist.length && rated.length) dist = [5, 4, 3, 2, 1].map(r => ({ r, n: rated.filter(x => Math.round(x.rating) === r).length }));
+  const dTot = dist.reduce((a, d) => a + d.n, 0);
+  h += '<div class="rvtop"><div class="rvavg"><b>' + (avg == null ? '–' : avg.toFixed(1)) + '</b>' + stars(avg) +
+    '<span class="note">' + esc(t('rv_counts', m.count != null ? m.count : items.length, items.length)) + '</span></div>';
+  if (dTot) h += '<div class="curve">' + [5, 4, 3, 2, 1].map(r => { const d = dist.find(x => x.r === r) || { n: 0 }; const pct = d.n / dTot * 100;
+    return '<div class="crow"><span class="k">' + r + '★</span><span class="bar"><i style="width:' + pct.toFixed(1) + '%"></i></span><span class="n">' + pct.toFixed(0) + '% · ' + fmtN(d.n) + '</span></div>'; }).join('') + '</div>';
+  h += '</div>';
+  if (m.fit && typeof m.fit === 'string') h += '<p class="note" style="margin:0">' + esc(t('rv_fit')) + ': ' + esc(m.fit) + '</p>';
+  if (items.length) {
+    const textOf = r => (r.title || '') + ' ' + (r.text || '');
+    const tags = RV_TAGS.map(([k, re]) => ({ k, re, n: items.filter(r => re.test(textOf(r))).length })).filter(x => x.n);
+    if (tags.length) h += '<div class="rvtags" role="group" aria-label="' + esc(t('rv_tags')) + '"><span class="note">' + esc(t('rv_tags')) + '</span>' +
+      tags.map(x => '<button type="button" class="rvtag" data-rvtag="' + x.k + '" aria-pressed="' + (state.rvTag === x.k) + '">' + esc(t(x.k)) + ' <b>' + x.n + '</b><span class="note"> ' + Math.round(x.n / items.length * 100) + '%</span></button>').join('') + '</div>';
+    const tag = RV_TAGS.find(x => x[0] === state.rvTag);
+    const list = tag ? items.filter(r => tag[1].test(textOf(r))) : items;
+    const shown = state.rvAll ? list : list.slice(0, 8);
+    h += '<div class="rvlist">' + shown.map(r => {
+      const flat = []; if (r.extra && typeof r.extra === 'object') Object.entries(r.extra).forEach(([k, v]) => { if (v && typeof v === 'object') Object.entries(v).forEach(([k2, v2]) => { flat.push([k2, v2 && typeof v2 === 'object' ? (v2.Value || v2.value || v2.ValueLabel || '') : v2]); }); else flat.push([k, v]); });
+      const ex = flat.filter(([k, v]) => v !== '' && v != null && typeof v !== 'object' && /size|fit|height|age|bodytype|body|purchased|location|recommend/i.test(k)).slice(0, 4);
+      return '<article class="rv"><div class="rvh">' + stars(r.rating) + (r.title ? '<b>' + esc(r.title) + '</b>' : '') + '</div>' +
+        (r.text ? '<p>' + esc(r.text) + '</p>' : '') +
+        '<div class="note">' + [r.author, r.date ? String(r.date).slice(0, 10) : ''].filter(Boolean).map(esc).join(' · ') +
+        (ex.length ? ' · ' + ex.map(([k, v]) => esc(k) + ': ' + esc(String(v))).join(' · ') : '') + '</div></article>';
+    }).join('') + '</div>';
+    if (list.length > shown.length) h += '<button type="button" class="btn small" id="rvMore">' + esc(t('rv_more', list.length - shown.length)) + '</button>';
+  }
+  return h + '</section>';
 }
 function logHtml(hist){
   if (!hist.length) return '<p class="note" style="margin:0">' + esc(t('h_loading')) + '</p>';
@@ -853,6 +936,8 @@ $('#sheet').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
   const s = state.styles.find(x => x.key === state.sel); if (!s) return;
   if (b.dataset.sec) { state.sec = b.dataset.sec; renderSheet(); return; }
+  if (b.dataset.rvtag) { state.rvTag = state.rvTag === b.dataset.rvtag ? null : b.dataset.rvtag; state.rvAll = false; renderSheet(); return; }
+  if (b.id === 'rvMore') { state.rvAll = true; renderSheet(); return; }
   if (b.id === 'seaToggle') {
     const j = await admin(s.seaa ? 'unmark' : 'mark', s.key);
     if (j.ok) { s.seaa = !s.seaa; showMsg('ok', t(s.seaa ? 'm_sea_on' : 'm_sea_off', s.name)); render(); } else showMsg('err', t('m_seafail'));
@@ -869,7 +954,7 @@ $('#sheet').addEventListener('click', async e => {
   if (b.id === 'reqRefresh') {
     b.disabled = true; b.textContent = t('capturing');
     const j = await captureUrl(s.url);
-    if (j.ok) { showMsg('ok', t('m_refreshed', j.style.name, j.hist.units)); await loadAll(); state.histKey = null; render(); }
+    if (j.ok) { showMsg('ok', t('m_refreshed', j.style.name, j.hist.units)); await loadAll(); state.histKey = null; state.rvKey = null; render(); }
     else { showMsg('err', t('m_cap_err', j.error)); b.disabled = false; b.textContent = t('b_refresh'); }
     return;
   }
@@ -897,6 +982,15 @@ async function loadAll(){
   if (state.sel && !state.styles.some(s => s.key === state.sel)) state.sel = null;
   setStatus(true, 'st_on');
   return true;
+}
+function loadReviews(key){
+  if (state.rvKey === key) return;
+  state.rvKey = key; state.rv = null; state.rvTag = null; state.rvAll = false;
+  api('/api/reviews?key=' + encodeURIComponent(key)).then(j => {
+    if (state.rvKey !== key) return;
+    state.rv = j.ok ? j : { items: [], meta: null };
+    if (state.sel === key && state.view === 'styles') renderSheet();
+  });
 }
 function loadHist(key){
   if (state.histKey === key) return;

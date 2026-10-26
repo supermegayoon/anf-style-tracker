@@ -82,7 +82,26 @@ assert.equal(listed.seaa, true); assert.equal(listed.date, dates[9]);
 const hist = (await get('/api/history?key=' + fixture.key)).history;
 assert.equal(hist.length, 10);
 
-// 7) Capture rejects non-A&F URLs before any network call
+// 7) Reviews: a US capture saves them, a later non-US capture (no reviews) keeps them, repeats are not duplicated
+const withRv = snapshotFor(fixture, dates[9], (inv, ci, ki) => Math.max(0, inv + 200 - 9 * (ki + 1) * 3 + 60 - 1));
+Object.values(withRv.hist.c).forEach(v => { v.o = 39.95; }); withRv.hist.at = dates[9] + 'T06:00:00.000Z'; withRv.hist.ck = fnv(canon(withRv.hist.c));
+withRv.reviews = { store: 'us', rating: 4.3, count: 57, dist: [{ r: 5, n: 30 }, { r: 4, n: 15 }, { r: 3, n: 6 }, { r: 2, n: 4 }, { r: 1, n: 2 }],
+  items: [{ id: 'a1', rating: 5, title: 'So soft', text: 'Runs small, size up. Very soft.', author: 'kim', date: '2026-10-01' },
+          { rating: 2, title: 'Sheer', text: 'Totally see-through in white', author: 'lee', date: '2026-09-20', extra: { Size: 'M' } },
+          { rating: 9, title: '', text: '' }], diag: { seo: 2 } };
+let ri = await post('/api/ingest', withRv);
+assert.equal(ri.status, 200); assert.equal(ri.j.reviews.saved, 2); assert.equal(ri.j.reviews.count, 57);
+ri = await post('/api/ingest', withRv);
+assert.equal(ri.j.reviews.saved, 0);
+const wd = JSON.parse(JSON.stringify(withRv)); wd.reviews = { store: 'wd', rating: null, count: null, items: [], diag: { seo: 0 } };
+assert.equal((await post('/api/ingest', wd)).status, 200);
+const rvs = await get('/api/reviews?key=' + fixture.key);
+assert.equal(rvs.items.length, 2); assert.equal(rvs.meta.count, 57); assert.equal(rvs.meta.store, 'us'); assert.equal(rvs.diag.store, 'wd');
+assert.equal((await get('/api/styles')).styles.find(s => s.key === fixture.key).rv.saved, 2);
+const noRv = snapshotFor(fixture, dates[9], inv => inv); delete noRv.reviews; noRv.hist.at = dates[9] + 'T01:00:00.000Z';
+assert.equal((await post('/api/ingest', noRv)).status, 200);
+
+// 8) Capture rejects non-A&F URLs before any network call
 const rc = await post('/api/capture', { url: 'https://evil.example/p/1' });
 assert.equal(rc.status, 400); assert.equal(rc.j.error, 'bad_url');
 

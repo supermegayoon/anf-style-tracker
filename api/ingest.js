@@ -1,5 +1,6 @@
 import { validSnapshot } from '../lib/extract.js';
 import { save } from '../lib/store.js';
+import { cleanReviews, saveReviews } from '../lib/reviews.js';
 import { send, readJson, CORS } from '../lib/http.js';
 
 // POST snapshot from the bookmarklet, which runs on the A&F page in the user's own browser.
@@ -11,7 +12,9 @@ export default async function handler(req, res) {
   if (bad) return send(res, 400, { ok: false, error: bad }, CORS);
   try {
     await save(r.style, r.hist);
-    return send(res, 200, { ok: true, key: r.style.key, name: r.style.name, date: r.hist.date, units: r.hist.units, colors: r.style.colors.length }, CORS);
+    let rv = null;
+    try { rv = await saveReviews(r.style.key, r.hist.date, r.hist.at, cleanReviews(r.reviews)); } catch (e) { rv = { error: 'reviews' }; }
+    return send(res, 200, { ok: true, key: r.style.key, name: r.style.name, date: r.hist.date, units: r.hist.units, colors: r.style.colors.length, reviews: rv }, CORS);
   } catch (e) {
     return send(res, 500, { ok: false, error: 'server' }, CORS);
   }
