@@ -93,6 +93,17 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 .item[aria-current="true"]{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
 .item .ph{grid-row:1/3}
 .item .nm{font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.sno{font-family:var(--f-mono);font-size:11px;font-weight:600;background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:1px 6px;margin-right:6px;white-space:nowrap}
+.nm2{display:block;font-weight:400;font-size:11px;color:var(--muted)}
+.cfrow{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:12px}
+.cfv{display:inline-flex;gap:6px;align-items:baseline;background:var(--sunk);border-radius:4px;padding:2px 8px;max-width:100%;overflow-wrap:anywhere}
+.cfv i{font-style:normal;color:var(--muted);font-size:11px;white-space:nowrap}
+.cfv.note-v{flex-basis:100%}
+.cform{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px 10px;background:var(--sunk);border-radius:var(--r);padding:10px;max-width:760px}
+.cform label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);min-width:0}
+.cform label.wide{grid-column:1/-1}
+.cform input,.cform textarea{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:6px 8px;font-size:13px;color:var(--ink);min-width:0;width:100%}
+.cbtns{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .item .sub{grid-column:2/4;display:flex;gap:4px 10px;flex-wrap:wrap;font-size:12px;color:var(--muted);align-items:center}
 .item .px{text-align:right;font-size:13px;white-space:nowrap}
 .ph{display:block;width:48px;aspect-ratio:4/5;max-width:100%;border-radius:4px;overflow:hidden;background:var(--sunk);border:1px solid var(--line)}
@@ -406,6 +417,11 @@ const I18N = {
   }
 };
 Object.assign(I18N.ko, {
+  search: '이름·스타일 번호·카테고리·메모 검색',
+  cf_styleNo: '스타일 번호', cf_alias: '표시 이름', cf_season: '시즌', cf_vendor: '공장·벤더', cf_note: '메모',
+  cf_ph_styleNo: '예: SA26-1234', cf_ph_alias: '비우면 사이트 상품명', cf_ph_season: '예: FA26', cf_ph_vendor: '예: 세아 베트남 1공장',
+  cf_add: '✎ 스타일 번호·메모 추가', cf_edit: '✎ 편집', cf_save: '저장', cf_cancel: '취소', cf_hint: '팀 모두에게 보입니다.',
+  cf_at: d => '수정 ' + d, cf_saved: n => n + ' 정보를 저장했습니다.', cf_fail: '저장하지 못했습니다. 다시 시도해 주세요.',
   rv_title: '고객 리뷰', rv_asof: d => d + ' 수집 기준', rv_counts: (c, n) => '사이트 리뷰 ' + fmtN(c) + '개 · 저장 ' + fmtN(n) + '개',
   rv_none: '아직 저장된 리뷰가 없습니다. 리뷰는 A&F가 미국 스토어에서만 보여 줍니다. 미국 스토어(회사 VPN)로 상품 페이지를 연 상태에서 북마클릿을 누르면 리뷰도 함께 저장됩니다. 화면에 보이는 리뷰만 저장되니, "더 보기"로 리뷰를 펼친 뒤 누르면 더 많이 쌓입니다.',
   rv_last: (d, st) => '마지막 수집 ' + d + ' · 스토어 ' + st + (st === 'us' ? '' : ' (리뷰 없음)'),
@@ -428,6 +444,11 @@ Object.assign(I18N.ko, {
   w_nomark: '세아로 표시된 스타일이 아직 없습니다. 상품을 열고 "세아 스타일로 표시"를 눌러주세요.'
 });
 Object.assign(I18N.en, {
+  search: 'Search name, style no., category, notes',
+  cf_styleNo: 'Style no.', cf_alias: 'Display name', cf_season: 'Season', cf_vendor: 'Factory / vendor', cf_note: 'Notes',
+  cf_ph_styleNo: 'e.g. SA26-1234', cf_ph_alias: 'Blank uses the site name', cf_ph_season: 'e.g. FA26', cf_ph_vendor: 'e.g. Sae-A Vietnam #1',
+  cf_add: '✎ Add style no. / notes', cf_edit: '✎ Edit', cf_save: 'Save', cf_cancel: 'Cancel', cf_hint: 'Visible to the whole team.',
+  cf_at: d => 'Edited ' + d, cf_saved: n => 'Saved details for ' + n + '.', cf_fail: 'Could not save. Try again.',
   rv_title: 'Customer reviews', rv_asof: d => 'As of ' + d, rv_counts: (c, n) => fmtN(c) + ' on site · ' + fmtN(n) + ' saved',
   rv_none: 'No reviews saved yet. A&F only shows reviews on its US store. Open the product page on the US store (company VPN) and click the bookmarklet to save the reviews too. Only reviews shown on screen are saved, so expand them with "Load more" first to save more.',
   rv_last: (d, st) => 'Last capture ' + d + ' · store ' + st + (st === 'us' ? '' : ' (no reviews)'),
@@ -480,7 +501,7 @@ const cmpP = (a, b) => { const x = rankP(a), y = rankP(b); return x[0] - y[0] ||
 const cmpS = (a, b) => { const i = SEC_ORDER.indexOf(a), j = SEC_ORDER.indexOf(b); return (i < 0 ? 99 : i) - (j < 0 ? 99 : j) || String(a).localeCompare(String(b)); };
 
 
-const state = { styles: [], daily: {}, sel: null, brand: 'all', q: '', sec: 'all', hist: [], histKey: null, confirmDel: false, statusKey: 'st_wait', view: 'styles', sea: 'all', badHist: 0, loaded: false, loadedAt: 0, admin: '', rv: null, rvKey: null, rvTag: null, rvAll: false };
+const state = { styles: [], daily: {}, sel: null, brand: 'all', q: '', sec: 'all', hist: [], histKey: null, confirmDel: false, statusKey: 'st_wait', view: 'styles', sea: 'all', badHist: 0, loaded: false, loadedAt: 0, admin: '', rv: null, rvKey: null, rvTag: null, rvAll: false, editing: null };
 
 /* ---------- bookmarklet (public/bm.js) ---------- */
 function buildBM(){ return window.anfBookmarklet(LANG); }
@@ -573,10 +594,13 @@ function render(){
   document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === state.view)));
   if (wk) renderWeekly(); else { renderList(); renderSheet(); }
 }
+const CF = ['styleNo', 'alias', 'season', 'vendor', 'note'];
+const cf = s => s.custom || {};
+const nameOf = s => cf(s).alias || s.name;
 function filtered(){
   const q = state.q.toLowerCase();
   return state.styles.filter(s => (state.brand === 'all' || s.bs === state.brand) && (state.sea === 'all' || (state.sea === 'sea') === !!s.seaa) &&
-    (!q || [s.name, s.category, s.fabric, s.department].join(' ').toLowerCase().includes(q)))
+    (!q || [s.name, s.category, s.fabric, s.department, s.collectionId].concat(CF.map(k => cf(s)[k] || '')).join(' ').toLowerCase().includes(q)))
     .sort((a, b) => (b.capturedAt || '').localeCompare(a.capturedAt || ''));
 }
 function renderList(){
@@ -591,7 +615,8 @@ function renderList(){
     const lead = (s.colors || []).find(c => c.id === s.productId) || (s.colors || [])[0];
     return '<button type="button" class="item" data-key="' + esc(s.key) + '" aria-current="' + (s.key === state.sel) + '">' +
       photo({ thumb: heroUrl(s, 120), color: s.name, family: lead && lead.family }) +
-      '<span class="nm">' + esc(s.name) + '</span>' +
+      '<span class="nm">' + (cf(s).styleNo ? '<span class="sno">' + esc(cf(s).styleNo) + '</span>' : '') + esc(nameOf(s)) +
+        (cf(s).alias || cf(s).season || cf(s).vendor ? '<span class="nm2">' + [cf(s).alias ? s.name : '', cf(s).season, cf(s).vendor].filter(Boolean).map(esc).join(' · ') + '</span>' : '') + '</span>' +
       '<span class="px num">' + px + (st.mdColors ? '<br><span style="color:var(--bad);font-size:11px">−' + Math.round(st.deepest * 100) + '%</span>' : '') + '</span>' +
       '<span class="sub"><span class="tag ' + esc(s.bs) + '">' + esc(BRAND[s.bs] || s.bs) + '</span>' + (s.seaa ? '<span class="tag sea">SAE-A</span>' : '') + (s.rv && (s.rv.saved || s.rv.count) ? '<span class="rvbadge">★ ' + (s.rv.rating != null ? Number(s.rv.rating).toFixed(1) + ' · ' : '') + fmtN(s.rv.count || s.rv.saved) + '</span>' : '') + '<span>' + esc(s.category || s.department) + '</span>' +
       '<span class="num">' + esc(t('colors_n', st.colors)) + ' · ' + esc(t('units_n', st.units)) + '</span>' +
@@ -622,7 +647,8 @@ function renderSheet(){
 
   let h = '<section><div class="shead"><div style="display:flex;flex-direction:column;gap:6px;min-width:0">' +
     '<div class="crumb"><span class="tag ' + esc(s.bs) + '">' + esc(s.brand) + '</span>' + (s.seaa ? '<span class="tag sea">SAE-A</span>' : '') + '<span>' + esc(s.category) + '</span>' + (s.shortDesc ? '<span>· ' + esc(s.shortDesc) + '</span>' : '') + '</div>' +
-    '<h2>' + esc(s.name) + '</h2>' +
+    '<h2>' + esc(nameOf(s)) + '</h2>' + (cf(s).alias ? '<div class="crumb"><span>' + esc(s.name) + '</span></div>' : '') +
+    customHtml(s) +
     '<div class="crumb"><span class="mono">' + esc(t('captured')) + ' ' + esc(fmtTime(s.capturedAt)) + '</span><span>· ' + esc(t('records', hist.length)) + '</span>' + (s.store && s.store !== 'us' ? '<span>· ' + esc(t('store')) + ' ' + esc(s.store) + '</span>' : '') + '</div></div>' +
     '<div class="actions"><a class="btn small" href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(t('b_page')) + '</a>' +
     '<button type="button" class="btn small' + (s.seaa ? '' : ' primary') + '" id="seaToggle">' + esc(t(s.seaa ? 'b_sea_off' : 'b_sea_on')) + '</button>' +
@@ -765,6 +791,17 @@ function reviewsHtml(s){
     if (list.length > shown.length) h += '<button type="button" class="btn small" id="rvMore">' + esc(t('rv_more', list.length - shown.length)) + '</button>';
   }
   return h + '</section>';
+}
+function customHtml(s){
+  const c = cf(s);
+  if (state.editing === s.key) {
+    return '<form class="cform" id="cform" autocomplete="off">' + CF.map(k => '<label class="' + (k === 'note' ? 'wide' : '') + '"><span>' + esc(t('cf_' + k)) + '</span>' +
+      (k === 'note' ? '<textarea name="' + k + '" rows="2" maxlength="1000">' + esc(c[k] || '') + '</textarea>' : '<input name="' + k + '" value="' + esc(c[k] || '') + '" maxlength="' + (k === 'alias' ? 120 : 80) + '" placeholder="' + esc(t('cf_ph_' + k)) + '">') + '</label>').join('') +
+      '<div class="cbtns"><button type="submit" class="btn small primary">' + esc(t('cf_save')) + '</button><button type="button" class="btn small" id="cfCancel">' + esc(t('cf_cancel')) + '</button><span class="note">' + esc(t('cf_hint')) + '</span></div></form>';
+  }
+  const parts = CF.filter(k => k !== 'alias' && c[k]).map(k => '<span class="cfv' + (k === 'note' ? ' note-v' : '') + '"><i>' + esc(t('cf_' + k)) + '</i>' + esc(c[k]) + '</span>');
+  return '<div class="cfrow">' + parts.join('') + '<button type="button" class="linklike" id="cfEdit">' + esc(t(parts.length || c.alias ? 'cf_edit' : 'cf_add')) + '</button>' +
+    (c.at ? '<span class="note">' + esc(t('cf_at', fmtTime(c.at))) + '</span>' : '') + '</div>';
 }
 function logHtml(hist){
   if (!hist.length) return '<p class="note" style="margin:0">' + esc(t('h_loading')) + '</p>';
@@ -917,8 +954,8 @@ $('#weekly').addEventListener('click', async e => {
   if (bb) { state.brand = bb.dataset.wbrand; document.querySelectorAll('#brandSeg [data-brand]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.brand === state.brand))); renderWeekly(); return; }
   if (e.target.closest('#wcsv')) {
     const M = weeklyModel();
-    const rows = [['group', 'brand', 'style', 'collection_id', 'week_start', 'est_units_sold', 'est_revenue_usd', 'units_received', 'end_stock']];
-    M.styles.forEach(s => M.weeks.forEach(w => { const c = M.cell(s, w); if (!c || c.onlyFirst) return; rows.push([s.seaa ? 'Sae-A' : 'Other', s.brand, s.name, s.collectionId, w, c.s, Math.round(c.v * 100) / 100, c.r, c.u]); }));
+    const rows = [['group', 'brand', 'style_no', 'style', 'collection_id', 'week_start', 'est_units_sold', 'est_revenue_usd', 'units_received', 'end_stock']];
+    M.styles.forEach(s => M.weeks.forEach(w => { const c = M.cell(s, w); if (!c || c.onlyFirst) return; rows.push([s.seaa ? 'Sae-A' : 'Other', s.brand, cf(s).styleNo || '', nameOf(s), s.collectionId, w, c.s, Math.round(c.v * 100) / 100, c.r, c.u]); }));
     const csv = '﻿' + rows.map(r => r.map(v => { const x = v == null ? '' : String(v); return /[",\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; }).join(',')).join('\n');
     downloadCsv('AF_weekly_sales_' + todayStr() + '.csv', csv);
   }
@@ -932,10 +969,22 @@ document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click'
 $('#brandSeg').addEventListener('click', e => { const b = e.target.closest('button[data-brand]'); if (!b) return; state.brand = b.dataset.brand; document.querySelectorAll('[data-brand]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); renderList(); });
 $('#q').addEventListener('input', e => { state.q = e.target.value; renderList(); });
 $('#list').addEventListener('click', e => { const b = e.target.closest('.item'); if (!b) return; state.sel = b.dataset.key; state.sec = 'all'; state.confirmDel = false; render(); if (window.matchMedia('(max-width:900px)').matches) $('#sheet').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+$('#sheet').addEventListener('submit', async e => {
+  if (e.target.id !== 'cform') return;
+  e.preventDefault();
+  const s = state.styles.find(x => x.key === state.sel); if (!s) return;
+  const fd = new FormData(e.target), fields = {};
+  CF.forEach(k => { fields[k] = fd.get(k) || ''; });
+  const j = await api('/api/edit', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: s.key, fields }) });
+  if (j.ok) { s.custom = j.custom; state.editing = null; showMsg('ok', t('cf_saved', nameOf(s))); render(); }
+  else showMsg('err', t('cf_fail'));
+});
 $('#sheet').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
   const s = state.styles.find(x => x.key === state.sel); if (!s) return;
   if (b.dataset.sec) { state.sec = b.dataset.sec; renderSheet(); return; }
+  if (b.id === 'cfEdit') { state.editing = s.key; renderSheet(); const f = $('#cform input[name="styleNo"]'); if (f) f.focus(); return; }
+  if (b.id === 'cfCancel') { state.editing = null; renderSheet(); return; }
   if (b.dataset.rvtag) { state.rvTag = state.rvTag === b.dataset.rvtag ? null : b.dataset.rvtag; state.rvAll = false; renderSheet(); return; }
   if (b.id === 'rvMore') { state.rvAll = true; renderSheet(); return; }
   if (b.id === 'seaToggle') {

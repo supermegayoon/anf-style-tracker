@@ -101,7 +101,15 @@ assert.equal((await get('/api/styles')).styles.find(s => s.key === fixture.key).
 const noRv = snapshotFor(fixture, dates[9], inv => inv); delete noRv.reviews; noRv.hist.at = dates[9] + 'T01:00:00.000Z';
 assert.equal((await post('/api/ingest', noRv)).status, 200);
 
-// 8) Capture rejects non-A&F URLs before any network call
+// 8) Team-entered details: anyone can save them, they show in the list, and a new capture keeps them
+let ce = await post('/api/edit', { key: fixture.key, fields: { styleNo: ' SA26-1234 ', alias: 'Cami A', note: 'x'.repeat(1500), bogus: 'no' } });
+assert.equal(ce.status, 200); assert.equal(ce.j.custom.styleNo, 'SA26-1234'); assert.equal(ce.j.custom.note.length, 1000); assert.equal(ce.j.custom.bogus, undefined);
+assert.equal((await post('/api/ingest', withRv)).status, 200);
+const cs = (await get('/api/styles')).styles.find(s => s.key === fixture.key);
+assert.equal(cs.custom.styleNo, 'SA26-1234'); assert.equal(cs.custom.alias, 'Cami A');
+assert.equal((await post('/api/edit', { key: 'anf-1', fields: {} })).status, 404);
+
+// 9) Capture rejects non-A&F URLs before any network call
 const rc = await post('/api/capture', { url: 'https://evil.example/p/1' });
 assert.equal(rc.status, 400); assert.equal(rc.j.error, 'bad_url');
 
